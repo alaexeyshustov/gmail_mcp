@@ -1,0 +1,23 @@
+# Ignore bundler config
+/.bundle
+/vendor/bundle
+
+# Ignore sensitive credentials
+credentials.json
+token.yaml
+
+# Ignore IDE files
+.idea/
+*.iml
+.vscode/
+.DS_Store
+
+# Ignore gem files
+*.gem
+Gemfile.lock
+
+# Ignore test artifacts
+.rspec_status
+coverage/
+spec/reports/
+

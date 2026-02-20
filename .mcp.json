@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "gmail": {
+      "command": "ruby",
+      "args": ["mcp_server.rb"],
+      "cwd": "/Users/aleksey.shustov/gmail_mcp",
+      "env": {}
+    }
+  }
+}
+
