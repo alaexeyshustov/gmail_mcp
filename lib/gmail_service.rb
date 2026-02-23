@@ -38,8 +38,32 @@ class GmailService
     credentials
   end
 
-  def list_messages(max_results: 10, query: nil)
-    result = @service.list_user_messages('me', max_results: max_results, q: query)
+  def list_messages(max_results: 100, query: nil, after_date: nil, before_date: nil, offset: 0)
+    date_filters = []
+    date_filters << "after:#{after_date.strftime('%Y/%m/%d')}" if after_date
+    date_filters << "before:#{before_date.strftime('%Y/%m/%d')}" if before_date
+
+    combined_query = [query, *date_filters].compact.join(' ').strip
+    combined_query = nil if combined_query.empty?
+
+    page_token = nil
+    skipped = 0
+
+    # Walk through pages, skipping full pages until we reach the offset
+    while skipped < offset
+      remaining = offset - skipped
+      # Fetch up to remaining+1 so we can tell if there are more results
+      page_size = [remaining, 500].min
+      result = @service.list_user_messages('me', max_results: page_size, q: combined_query, page_token: page_token)
+      fetched = (result.messages || []).size
+      skipped += fetched
+      page_token = result.next_page_token
+
+      # No more messages to skip past
+      break if page_token.nil? || fetched < page_size
+    end
+
+    result = @service.list_user_messages('me', max_results: max_results, q: combined_query, page_token: page_token)
     messages = result.messages || []
 
     messages.map do |message|

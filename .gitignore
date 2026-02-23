@@ -20,4 +20,3 @@ Gemfile.lock
 .rspec_status
 coverage/
 spec/reports/
-
