@@ -3,21 +3,22 @@
 require 'yaml'
 require 'fast_mcp'
 
-require_relative 'lib/l_service'
-require_relative 'lib/tools/list_emails'
-require_relative 'lib/tools/get_email'
-require_relative 'lib/tools/search_emails'
-require_relative 'lib/tools/get_labels'
-require_relative 'lib/tools/get_unread_count'
+require_relative 'gmail_service'
+require_relative 'tools/list_emails'
+require_relative 'tools/get_email'
+require_relative 'tools/search_emails'
+require_relative 'tools/get_labels'
+require_relative 'tools/get_unread_count'
 
 # Load configuration
-config = YAML.load_file(File.join(__dir__, 'config.yml'))
+root = File.expand_path('../../', __FILE__)
+config = YAML.load_file(File.join(root, 'config.yml'))
 
 # Initialize a single shared GmailService instance.
 # This avoids repeated OAuth initialization and keeps token refresh simple.
 gmail = GmailService.new(
-  credentials_path: File.join(__dir__, config['credentials_path']),
-  token_path: File.join(__dir__, config['token_path'])
+  credentials_path: File.join(root, config['credentials_path']),
+  token_path: File.join(root, config['token_path'])
 )
 
 # Inject the shared service into each tool class
