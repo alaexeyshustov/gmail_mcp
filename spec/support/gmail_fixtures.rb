@@ -1,7 +1,3 @@
-# frozen_string_literal: true
-
-require 'base64'
-
 module SpecHelpers
   module GmailFixtures
     def sample_email_headers(overrides = {})
@@ -19,13 +15,17 @@ module SpecHelpers
 
     def sample_email_payload(body_text: 'Test email body', multipart: false)
       if multipart
+        # The google-apis-gmail_v1 gem auto-decodes body.data (property :data, :base64 => true).
+        # Fixtures return the already-decoded plain text, matching real gem behaviour.
         parts = [
           double('part',
-            body: double('body', data: Base64.urlsafe_encode64('Part 1')),
+            mime_type: 'text/plain',
+            body: double('body', data: 'Part 1'),
             parts: nil
           ),
           double('part',
-            body: double('body', data: Base64.urlsafe_encode64('Part 2')),
+            mime_type: 'text/plain',
+            body: double('body', data: 'Part 2'),
             parts: nil
           )
         ]
@@ -38,7 +38,7 @@ module SpecHelpers
       else
         double('payload',
           headers: sample_email_headers,
-          body: double('body', data: Base64.urlsafe_encode64(body_text)),
+          body: double('body', data: body_text),
           parts: nil
         )
       end
@@ -59,7 +59,7 @@ module SpecHelpers
     end
 
     def encode_body(text)
-      Base64.urlsafe_encode64(text)
+      text
     end
   end
 end

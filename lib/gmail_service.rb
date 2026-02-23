@@ -7,7 +7,7 @@ class GmailService
 
   OOB_URI = 'urn:ietf:wg:oauth:2.0:oob'
   APPLICATION_NAME = 'Gmail MCP Server'
-  SCOPE = Google::Apis::GmailV1::AUTH_GMAIL_READONLY
+  SCOPE = ['https://www.googleapis.com/auth/gmail.readonly'].freeze
 
   def initialize(credentials_path:, token_path:)
     @credentials_path = credentials_path
@@ -26,9 +26,9 @@ class GmailService
 
     if credentials.nil?
       url = authorizer.get_authorization_url(base_url: OOB_URI)
-      puts "Open the following URL in the browser and enter the resulting code after authorization:"
-      puts url
-      print "Code: "
+      $stderr.puts 'Open the following URL in the browser and enter the resulting code after authorization:'
+      $stderr.puts url
+      $stderr.print 'Code: '
       code = $stdin.gets.chomp
       credentials = authorizer.get_and_store_credentials_from_code(
         user_id: user_id, code: code, base_url: OOB_URI
@@ -94,21 +94,48 @@ class GmailService
   private
 
   def extract_body(payload)
-    if payload.body&.data
+    if payload.parts && !payload.parts.empty?
+      # Collect all text/plain parts first (recursive)
+      text_parts = collect_parts(payload, 'text/plain')
+      return text_parts.join("\n\n") unless text_parts.empty?
+
+      # Fall back to text/html parts
+      html_parts = collect_parts(payload, 'text/html')
+      return html_parts.join("\n\n") unless html_parts.empty?
+
+      # Last resort: recurse through all parts and join non-empty bodies
+      payload.parts.filter_map { |part|
+        body = extract_body(part)
+        body unless body.empty?
+      }.join("\n\n")
+    elsif payload.body&.data && !payload.body.data.empty?
       decode_body(payload.body.data)
-    elsif payload.parts
-      parts = payload.parts.map { |part| extract_body(part) }.compact
-      parts.join("\n\n")
     else
       ''
     end
   end
 
+  # Recursively collect all parts matching mime_type that have body data
+  def collect_parts(payload, mime_type)
+    return [] unless payload.parts
+
+    payload.parts.flat_map do |part|
+      results = []
+      if part.respond_to?(:mime_type) && part.mime_type == mime_type && part.body&.data
+        results << decode_body(part.body.data)
+      end
+      results + collect_parts(part, mime_type)
+    end
+  end
+
   def decode_body(data)
-    require 'base64'
-    Base64.urlsafe_decode64(data)
-  rescue StandardError => e
-    "(Error decoding body: #{e.message})"
+    return '' if data.nil? || data.empty?
+
+    # The google-apis-gmail_v1 gem automatically base64url-decodes body.data
+    # when deserializing the API response, so data is already plain text here.
+    data.encode('UTF-8', invalid: :replace, undef: :replace, replace: '?')
+  rescue StandardError
+    ''
   end
 
 end

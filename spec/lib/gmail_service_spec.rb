@@ -1,9 +1,4 @@
-# frozen_string_literal: true
-
 require_relative  '../spec_helper'
-require 'google/apis/gmail_v1'
-require 'googleauth'
-require 'googleauth/stores/file_token_store'
 require_relative '../../lib/gmail_service'
 
 RSpec.describe GmailService do
@@ -142,7 +137,7 @@ RSpec.describe GmailService do
     let(:message) do
       payload = double('payload',
         headers: sample_email_headers('Subject' => 'Test Subject'),
-        body: double('body', data: Base64.urlsafe_encode64('Hello world')),
+        body: double('body', data: 'Hello world'),
         parts: nil
       )
       double('message',
@@ -196,7 +191,7 @@ RSpec.describe GmailService do
       let(:message) do
         payload = double('payload',
           headers: [],
-          body: double('body', data: Base64.urlsafe_encode64('body')),
+          body: double('body', data: 'body'),
           parts: nil
         )
         double('message',

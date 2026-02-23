@@ -1,254 +1,201 @@
 # Gmail MCP Server
 
-A Model Context Protocol (MCP) server for reading emails from Gmail, integrated with GitHub Copilot.
+A local [Model Context Protocol (MCP)](https://modelcontextprotocol.io) server
+written in Ruby that exposes your Gmail inbox as tools for AI agents. Integrates
+with **GitHub Copilot agent mode** in JetBrains IDEs and VS Code.
 
-## Features
+## What it does
 
-- **List Recent Emails**: Retrieve the most recent emails from your Gmail inbox
-- **Search Emails**: Search emails using Gmail's powerful search syntax
-- **Get Specific Email**: Retrieve a specific email by its ID
-- **Get Labels**: List all Gmail labels
-- **Get Unread Count**: Get the count of unread emails
+The server runs as a local child process. GitHub Copilot launches it via
+stdio and calls its tools in response to natural-language prompts like
+_"Show me my unread emails"_ or _"Search for invoices from last week"_.
+
+### Available tools
+
+| Tool | Description | Arguments |
+|------|-------------|-----------|
+| `list_emails` | List recent emails from the inbox | `max_results` (default 10), `query` (optional Gmail search) |
+| `get_email` | Fetch the full content of a specific email | `message_id` (required) |
+| `search_emails` | Search Gmail with a query string | `query` (required), `max_results` (default 10) |
+| `get_labels` | List all Gmail labels (system + user-created) | — |
+| `get_unread_count` | Get the total number of unread emails | — |
+
+All tools are **read-only** (`gmail.readonly` OAuth scope).
+
+---
 
 ## Prerequisites
 
-- Ruby 2.7 or higher
-- A Google Cloud Project with Gmail API enabled
-- OAuth 2.0 credentials from Google Cloud Console
+- Ruby ≥ 3.1
+- Bundler
+- A Google Cloud project with the **Gmail API** enabled
+- OAuth 2.0 Desktop App credentials (`credentials.json`)
+
+---
 
 ## Setup
 
-### 1. Install Dependencies
+### 1. Clone and install dependencies
 
 ```bash
+git clone <repo-url> gmail_mcp
+cd gmail_mcp
 bundle install
 ```
 
-### 2. Set Up Google Cloud Project
+### 2. Google Cloud credentials
 
 1. Go to [Google Cloud Console](https://console.cloud.google.com/)
-2. Create a new project or select an existing one
-3. Enable the Gmail API:
-   - Navigate to "APIs & Services" > "Library"
-   - Search for "Gmail API"
-   - Click "Enable"
+2. Create a project (or use an existing one)
+3. Enable the **Gmail API** under *APIs & Services → Library*
+4. Go to *APIs & Services → Credentials → Create Credentials → OAuth client ID*
+5. Choose **Desktop app**, download the JSON
+6. Save it as `credentials.json` in the project root
 
-### 3. Create OAuth 2.0 Credentials
+See `credentials.json.example` for the expected format.
 
-1. Go to "APIs & Services" > "Credentials"
-2. Click "Create Credentials" > "OAuth client ID"
-3. Choose "Desktop app" as the application type
-4. Give it a name (e.g., "Gmail MCP Server")
-5. Click "Create"
-6. Download the JSON file
-7. Save it to `~/.gmail_mcp/credentials.json`
+### 3. Authorise with Gmail (one-time)
 
 ```bash
-mkdir -p ~/.gmail_mcp
-# Copy your downloaded credentials.json to ~/.gmail_mcp/credentials.json
+bundle exec ruby -e "
+  require_relative 'lib/gmail_service'
+  GmailService.new(credentials_path: 'credentials.json', token_path: 'token.yaml')
+"
 ```
 
-### 4. First Run - Authorization
+This will:
+1. Print an authorisation URL — open it in your browser
+2. Approve access in the Google consent screen
+3. Paste the authorisation code back into the terminal
 
-On the first run, the server will prompt you to authorize access:
+`token.yaml` is created and stored in the project root. The server refreshes
+access tokens automatically from this point on.
+
+---
+
+## Running the server
 
 ```bash
-ruby gmail_server.rb
+bundle exec ruby mcp_server.rb
 ```
 
-Follow these steps:
-1. Open the URL displayed in your browser
-2. Sign in with your Google account
-3. Grant the requested permissions
-4. Copy the authorization code
-5. Paste it into the terminal
+The server reads JSON-RPC requests from **stdin** and writes responses to
+**stdout** (stdio MCP transport). It is normally started automatically by the
+IDE via `.mcp.json` — you do not need to run it manually.
 
-The authorization token will be saved to `~/.gmail_mcp/token.yaml` for future use.
+---
 
-## GitHub Copilot Integration
+## JetBrains / GitHub Copilot integration
 
-### For VS Code
-
-Add this to your VS Code settings (`.vscode/settings.json` or user settings):
-
-```json
-{
-  "github.copilot.advanced": {
-    "mcp": {
-      "servers": {
-        "gmail": {
-          "command": "ruby",
-          "args": ["gmail_server.rb"],
-          "cwd": "/Users/aleksey.shustov/RubymineProjects/gmail_mcp"
-        }
-      }
-    }
-  }
-}
-```
-
-### For JetBrains IDEs (RubyMine, IntelliJ IDEA, etc.)
-
-Create or update the MCP configuration file at `~/.config/github-copilot/mcp.json`:
+The `.mcp.json` file in the project root is already configured:
 
 ```json
 {
   "mcpServers": {
     "gmail": {
-      "command": "ruby",
-      "args": ["gmail_server.rb"],
-      "cwd": "/Users/aleksey.shustov/RubymineProjects/gmail_mcp"
+      "command": "bundle",
+      "args": ["exec", "ruby", "mcp_server.rb"],
+      "cwd": "/Users/aleksey.shustov/gmail_mcp",
+      "env": {}
     }
   }
 }
 ```
 
-Or add it to your project's `.mcp.json` file (already included in this project).
+JetBrains IDEs (RubyMine, IntelliJ IDEA, etc.) pick this up automatically
+when the project is open and GitHub Copilot is installed. See
+[COPILOT_INTEGRATION.md](COPILOT_INTEGRATION.md) for VS Code setup and
+troubleshooting.
 
-## Available Tools
+### Try it in Copilot Chat (agent mode)
 
-### 1. list_emails
-
-List recent emails from your Gmail inbox.
-
-**Parameters:**
-- `max_results` (optional): Maximum number of emails to retrieve (default: 10, max: 50)
-
-**Example usage in Copilot:**
-- "List my 20 most recent emails"
-- "Show me my latest emails"
-
-### 2. search_emails
-
-Search emails using Gmail search syntax.
-
-**Parameters:**
-- `query` (required): Gmail search query
-- `max_results` (optional): Maximum number of emails to retrieve (default: 10, max: 50)
-
-**Search query examples:**
-- `from:user@example.com` - Emails from a specific sender
-- `subject:meeting` - Emails with "meeting" in the subject
-- `is:unread` - Unread emails
-- `is:starred` - Starred emails
-- `has:attachment` - Emails with attachments
-- `after:2024/01/01` - Emails after a specific date
-- `label:important` - Emails with a specific label
-
-**Example usage in Copilot:**
-- "Search for unread emails from john@example.com"
-- "Find emails with subject 'invoice' from last month"
-
-### 3. get_email
-
-Get a specific email by its ID.
-
-**Parameters:**
-- `message_id` (required): The Gmail message ID
-
-**Example usage in Copilot:**
-- "Get the email with ID 18c2f3e4b5a6789"
-
-### 4. get_labels
-
-List all Gmail labels.
-
-**Example usage in Copilot:**
-- "Show me all my Gmail labels"
-- "What labels do I have in Gmail?"
-
-### 5. get_unread_count
-
-Get the count of unread emails.
-
-**Example usage in Copilot:**
-- "How many unread emails do I have?"
-- "What's my unread count?"
-
-## Usage Examples
-
-Once integrated with GitHub Copilot, you can interact with your Gmail using natural language:
-
-1. **Check recent emails:**
-   - "Show me my 10 most recent emails"
-   - "What are my latest emails?"
-
-2. **Search for specific emails:**
-   - "Find all unread emails from alice@example.com"
-   - "Search for emails about 'project deadline'"
-   - "Show me emails with attachments from this week"
-
-3. **Check email details:**
-   - "Get the full content of email [ID]"
-   - "Show me the body of the first email"
-
-4. **Check status:**
-   - "How many unread emails do I have?"
-   - "What Gmail labels do I have?"
-
-## Security Notes
-
-- The server only requests **read-only** access to your Gmail (`AUTH_GMAIL_READONLY` scope)
-- Your credentials are stored locally in `~/.gmail_mcp/`
-- Never commit `credentials.json` or `token.yaml` to version control
-- The `.gitignore` file is configured to exclude these sensitive files
-
-## Troubleshooting
-
-### "Credentials file not found"
-
-Make sure you've downloaded your OAuth 2.0 credentials and saved them to `~/.gmail_mcp/credentials.json`.
-
-### "Authorization failed"
-
-1. Delete the token file: `rm ~/.gmail_mcp/token.yaml`
-2. Run the server again and re-authorize
-
-### "API not enabled"
-
-Make sure the Gmail API is enabled in your Google Cloud Console project.
-
-### Connection issues
-
-Ensure your internet connection is stable and you can access Google services.
-
-## Development
-
-### Running the server directly
-
-```bash
-ruby gmail_server.rb
+```
+Show me my 5 most recent emails
+How many unread emails do I have?
+Search for emails from john@example.com
+Find emails with subject containing "invoice"
+List my Gmail labels
 ```
 
-### Testing
+---
 
-The project includes a comprehensive test suite using RSpec:
+## Testing
 
 ```bash
-# Run all tests
-bundle exec rake spec
-
-# Run specific tests
-bundle exec rspec spec/lib/gmail_service_spec.rb
-
-# See TESTING.md for more details
+bundle exec rspec
 ```
 
-**Test Coverage**: 25 examples covering:
-- Gmail service unit tests
-- MCP tool schema validation
-- Response format validation
-- Error handling
+**48 examples, 0 failures.**
 
-### Testing individual functions
+The test suite uses RSpec with WebMock — no real API calls are made during
+tests. Gmail API responses are mocked via `instance_double`.
 
-You can modify the server file to test specific functions or add new tools.
+---
 
-## License
+## Manual protocol test
 
-MIT
+You can exercise the server directly from the terminal:
 
-## Contributing
+```bash
+# List all registered tools
+printf '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"test","version":"0.1.0"}}}\n{"jsonrpc":"2.0","id":2,"method":"tools/list","params":{}}\n' \
+  | bundle exec ruby mcp_server.rb
 
-Feel free to submit issues or pull requests for improvements!
+# Get unread count (hits the real Gmail API)
+printf '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"test","version":"0.1.0"}}}\n{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"get_unread_count","arguments":{}}}\n' \
+  | bundle exec ruby mcp_server.rb
+
+# Search emails
+printf '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"test","version":"0.1.0"}}}\n{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"search_emails","arguments":{"query":"is:unread","max_results":3}}}\n' \
+  | bundle exec ruby mcp_server.rb
+```
+
+---
+
+## Project structure
+
+```
+gmail_mcp/
+├── .mcp.json                    # JetBrains/Copilot MCP server config
+├── mcp_server.rb                # Entry point — creates & starts MCP server
+├── config.yml                   # credentials_path / token_path
+├── credentials.json             # Google OAuth client credentials (not committed)
+├── token.yaml                   # OAuth refresh token (not committed)
+├── Gemfile
+├── lib/
+│   ├── gmail_service.rb         # Gmail API wrapper (OAuth, list, get, search)
+│   └── tools/
+│       ├── list_emails.rb       # MCP tool: list_emails
+│       ├── get_email.rb         # MCP tool: get_email
+│       ├── search_emails.rb     # MCP tool: search_emails
+│       ├── get_labels.rb        # MCP tool: get_labels
+│       └── get_unread_count.rb  # MCP tool: get_unread_count
+└── spec/
+    ├── lib/
+    │   ├── gmail_service_spec.rb
+    │   └── tools/               # One spec per tool
+    └── support/
+        └── gmail_fixtures.rb
+```
+
+---
+
+## Key dependencies
+
+| Gem | Version | Purpose |
+|-----|---------|---------|
+| `fast-mcp` | ~> 1.6 | MCP server (stdio transport, tool DSL, JSON-RPC 2.0) |
+| `google-apis-gmail_v1` | 0.47.0 | Official Gmail REST API client |
+| `googleauth` | 1.16.1 | OAuth 2.0 with automatic token refresh |
+| `pstore` | latest | Persistent token storage (used by `googleauth`) |
+
+---
+
+## Security notes
+
+- `credentials.json` and `token.yaml` contain secrets — **do not commit them**.
+  Add them to `.gitignore`.
+- The server uses the `gmail.readonly` scope only — it cannot send, delete,
+  or modify any email.
+- The MCP server binds to **stdio only** — no network port is opened.
 

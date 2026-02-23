@@ -1,10 +1,10 @@
 source 'https://rubygems.org'
 
-# gem 'ruby_llm'
-gem 'mcp'
 gem 'google-apis-gmail_v1'
 gem 'googleauth'
 gem 'rake'
+gem 'fast-mcp', '~> 1.6'
+gem 'pstore'
 gem 'dry-cli'
 
 group :test do
