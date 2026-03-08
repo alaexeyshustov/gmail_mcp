@@ -1,5 +1,5 @@
 require_relative '../spec_helper'
-require_relative '../../lib/gmail_auth'
+require_relative '../../lib/services/gmail_auth'
 
 RSpec.describe GmailAuth do
   let(:credentials_path) { '/fake/credentials.json' }

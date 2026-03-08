@@ -1,24 +1,34 @@
 require 'fast_mcp'
-require_relative '../gmail_service'
+require_relative '../provider_registry'
 
 module Tools
   class SearchEmails < FastMcp::Tool
     tool_name 'search_emails'
-    description 'Search Gmail using a query string and return matching emails'
+    description 'Search Gmail or Yahoo Mail using a query string and return matching emails.'
 
     arguments do
-      required(:query).filled(:string).description(
-        "Gmail search query (e.g. 'from:boss@example.com', 'subject:invoice', 'is:unread after:2024/01/01')"
-      )
-      optional(:max_results).filled(:integer).description('Maximum number of results to return (1-100). Defaults to 10.')
+      required(:provider).filled(:string)
+        .description('Email provider: "gmail" or "yahoo"')
+      required(:query).filled(:string)
+        .description(
+          "Search query (e.g. 'from:boss@example.com', 'subject:invoice', 'is:unread')"
+        )
+      optional(:max_results).filled(:integer)
+        .description('Maximum number of results to return (1-100). Defaults to 10.')
+      optional(:mailbox).filled(:string)
+        .description('Yahoo: mailbox/folder to search. Defaults to INBOX.')
     end
 
-    def call(query:, max_results: 10)
-      self.class.gmail_service.search_messages(query, max_results: max_results)
+    def call(provider:, query:, max_results: 10, mailbox: 'INBOX')
+      self.class.registry.fetch(provider).search_messages(
+        query,
+        max_results: max_results,
+        mailbox:     mailbox
+      )
     end
 
     class << self
-      attr_accessor :gmail_service
+      attr_accessor :registry
     end
   end
 end

@@ -3,7 +3,13 @@
 require 'dotenv/load'
 require 'fast_mcp'
 
-require_relative 'gmail_service'
+require_relative 'services/gmail_service'
+require_relative 'services/yahoo_mail_service'
+require_relative 'adapters/gmail_adapter'
+require_relative 'adapters/yahoo_adapter'
+require_relative 'provider_registry'
+require_relative 'email_classifier'
+
 require_relative 'tools/list_emails'
 require_relative 'tools/get_email'
 require_relative 'tools/search_emails'
@@ -11,41 +17,53 @@ require_relative 'tools/get_labels'
 require_relative 'tools/get_unread_count'
 require_relative 'tools/add_labels'
 require_relative 'tools/classify_emails'
-require_relative 'email_classifier'
 
-# Initialize a single shared GmailService instance.
-# This avoids repeated OAuth initialization and keeps token refresh simple.
+# ---------------------------------------------------------------------------
+# Build the provider registry — register only configured providers
+# ---------------------------------------------------------------------------
+registry = ProviderRegistry.new
+
 root = File.expand_path('../../', __FILE__)
-gmail = GmailService.new(
-  credentials_path: File.join(root, ENV.fetch('CREDENTIALS_PATH', 'credentials.json')),
-  token_path: File.join(root, ENV.fetch('TOKEN_PATH', 'token.yaml'))
-)
 
-# Inject the shared service into each tool class
-[
-  Tools::ListEmails,
-  Tools::GetEmail,
-  Tools::SearchEmails,
-  Tools::GetLabels,
-  Tools::GetUnreadCount,
-  Tools::AddLabels
-].each { |tool_class| tool_class.gmail_service = gmail }
+credentials_path = File.join(root, ENV.fetch('CREDENTIALS_PATH', 'credentials.json'))
+token_path       = File.join(root, ENV.fetch('TOKEN_PATH', 'token.yaml'))
 
-# Initialize the email classifier (uses Mistral via ruby_llm)
-Tools::ClassifyEmails.classifier = EmailClassifier.new(
-  api_key: ENV.fetch('MISTRAL_API_KEY', '')
-)
+if File.exist?(credentials_path)
+  gmail_service = GmailService.new(
+    credentials_path: credentials_path,
+    token_path:       token_path
+  )
+  registry.register('gmail', Adapters::GmailAdapter.new(gmail_service))
+else
+  $stderr.puts "INFO: Gmail credentials not found at #{credentials_path} — Gmail provider disabled."
+end
 
-# Create and configure the MCP server
-# FastMcp::Server creates a FastMcp::Logger by default which suppresses stdout
-# output when using the stdio transport — do not pass a plain Logger here.
-server = FastMcp::Server.new(
-  name: 'gmail',
-  version: '1.0.0'
-)
+yahoo_username = ENV['YAHOO_USERNAME']
+yahoo_password = ENV['YAHOO_APP_PASSWORD']
 
-# Register all tools
-server.register_tools(
+if yahoo_username && !yahoo_username.strip.empty? &&
+   yahoo_password && !yahoo_password.strip.empty?
+  yahoo_service = YahooMailService.new(
+    host:     ENV.fetch('YAHOO_IMAP_HOST', 'imap.mail.yahoo.com'),
+    port:     ENV.fetch('YAHOO_IMAP_PORT', '993').to_i,
+    username: yahoo_username,
+    password: yahoo_password
+  )
+  at_exit { yahoo_service.disconnect }
+  registry.register('yahoo', Adapters::YahooAdapter.new(yahoo_service))
+else
+  $stderr.puts "INFO: YAHOO_USERNAME or YAHOO_APP_PASSWORD not set — Yahoo provider disabled."
+end
+
+if registry.providers.empty?
+  $stderr.puts "ERROR: No email providers configured. Set up Gmail or Yahoo credentials."
+  exit 1
+end
+
+# ---------------------------------------------------------------------------
+# Inject registry into all tools
+# ---------------------------------------------------------------------------
+ALL_TOOLS = [
   Tools::ListEmails,
   Tools::GetEmail,
   Tools::SearchEmails,
@@ -53,7 +71,24 @@ server.register_tools(
   Tools::GetUnreadCount,
   Tools::AddLabels,
   Tools::ClassifyEmails
+].freeze
+
+ALL_TOOLS.each { |tool_class| tool_class.registry = registry }
+
+# Initialize the email classifier (works across providers)
+Tools::ClassifyEmails.classifier = EmailClassifier.new(
+  api_key: ENV.fetch('MISTRAL_API_KEY', '')
 )
 
-# Start the server using stdio transport (default for local MCP servers)
+# ---------------------------------------------------------------------------
+# Create and start the MCP server
+# FastMcp::Server creates a FastMcp::Logger by default which suppresses stdout
+# output when using the stdio transport — do not pass a plain Logger here.
+# ---------------------------------------------------------------------------
+server = FastMcp::Server.new(
+  name:    'mail',
+  version: '2.0.0'
+)
+
+server.register_tools(*ALL_TOOLS)
 server.start

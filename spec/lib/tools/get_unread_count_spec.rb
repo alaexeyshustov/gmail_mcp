@@ -1,33 +1,48 @@
 require_relative '../../spec_helper'
-require_relative '../../../lib/gmail_service'
+require_relative '../../../lib/provider_registry'
 require_relative '../../../lib/tools/get_unread_count'
 
 RSpec.describe Tools::GetUnreadCount do
-  let(:gmail) { instance_double(GmailService) }
+  let(:gmail_adapter) { double('GmailAdapter') }
+  let(:yahoo_adapter) { double('YahooAdapter') }
+  let(:registry) do
+    r = ProviderRegistry.new
+    r.register('gmail', gmail_adapter)
+    r.register('yahoo', yahoo_adapter)
+    r
+  end
 
-  before { described_class.gmail_service = gmail }
+  before { described_class.registry = registry }
 
   describe '#call' do
-    it 'calls get_unread_count on the Gmail service' do
-      expect(gmail).to receive(:get_unread_count).and_return(42)
-      tool = described_class.new
-      result = tool.call
-      expect(result).to eq(42)
-    end
+    context 'with provider: "gmail"' do
+      it 'calls get_unread_count on the gmail adapter' do
+        expect(gmail_adapter).to receive(:get_unread_count).with(mailbox: 'INBOX').and_return(42)
+        expect(described_class.new.call(provider: 'gmail')).to eq(42)
+      end
 
-    context 'when there are no unread emails' do
-      it 'returns 0' do
-        allow(gmail).to receive(:get_unread_count).and_return(0)
-        tool = described_class.new
-        expect(tool.call).to eq(0)
+      it 'returns 0 when there are no unread emails' do
+        allow(gmail_adapter).to receive(:get_unread_count).and_return(0)
+        expect(described_class.new.call(provider: 'gmail')).to eq(0)
       end
     end
 
-    context 'when Gmail API raises an error' do
-      it 'propagates the error' do
-        allow(gmail).to receive(:get_unread_count).and_raise(Google::Apis::Error.new('API error'))
-        tool = described_class.new
-        expect { tool.call }.to raise_error(Google::Apis::Error)
+    context 'with provider: "yahoo"' do
+      it 'calls get_unread_count on the yahoo adapter with mailbox' do
+        expect(yahoo_adapter).to receive(:get_unread_count).with(mailbox: 'Sent').and_return(3)
+        described_class.new.call(provider: 'yahoo', mailbox: 'Sent')
+      end
+
+      it 'defaults to INBOX' do
+        expect(yahoo_adapter).to receive(:get_unread_count).with(mailbox: 'INBOX').and_return(7)
+        described_class.new.call(provider: 'yahoo')
+      end
+    end
+
+    context 'with an unknown provider' do
+      it 'raises ProviderRegistry::UnknownProviderError' do
+        expect { described_class.new.call(provider: 'invalid') }
+          .to raise_error(ProviderRegistry::UnknownProviderError)
       end
     end
   end

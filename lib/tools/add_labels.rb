@@ -1,23 +1,35 @@
 require 'fast_mcp'
-require_relative '../gmail_service'
+require_relative '../provider_registry'
 
 module Tools
   class AddLabels < FastMcp::Tool
     tool_name 'add_labels'
-    description 'Add one or more labels (tags) to a specific email by message ID. ' \
-                'Use get_labels to find valid label IDs first.'
+    description 'Add one or more labels/flags to a specific email. ' \
+                'Gmail: use label IDs (e.g. "STARRED"). ' \
+                'Yahoo: use IMAP flags (e.g. "\\Flagged", "\\Seen"). ' \
+                'Use get_labels to list available labels/folders first.'
 
     arguments do
-      required(:message_id).filled(:string).description('The Gmail message ID (e.g. "18d3f1a2b3c4d5e6")')
-      required(:label_ids).array(:string).description('Array of label IDs to add (e.g. ["STARRED", "Label_42"])')
+      required(:provider).filled(:string)
+        .description('Email provider: "gmail" or "yahoo"')
+      required(:message_id).filled(:string)
+        .description('The message ID (Gmail string ID or Yahoo IMAP UID as string).')
+      required(:label_ids).array(:string)
+        .description('Array of label IDs or IMAP flags to add (e.g. ["STARRED"] or ["\\\\Flagged"]).')
+      optional(:mailbox).filled(:string)
+        .description('Yahoo: mailbox/folder containing the message. Defaults to INBOX.')
     end
 
-    def call(message_id:, label_ids:)
-      self.class.gmail_service.modify_labels(message_id, add_label_ids: label_ids)
+    def call(provider:, message_id:, label_ids:, mailbox: 'INBOX')
+      self.class.registry.fetch(provider).modify_labels(
+        message_id,
+        add:     label_ids,
+        mailbox: mailbox
+      )
     end
 
     class << self
-      attr_accessor :gmail_service
+      attr_accessor :registry
     end
   end
 end

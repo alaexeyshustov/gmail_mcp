@@ -1,45 +1,58 @@
 require_relative '../../spec_helper'
-require_relative '../../../lib/gmail_service'
+require_relative '../../../lib/provider_registry'
 require_relative '../../../lib/tools/get_email'
 
 RSpec.describe Tools::GetEmail do
-  let(:gmail) { instance_double(GmailService) }
-  let(:sample_email) do
-    {
-      id: 'msg_123',
-      thread_id: 'thread_123',
-      subject: 'Test Subject',
-      from: 'sender@example.com',
-      to: 'me@example.com',
-      date: 'Mon, 20 Feb 2026 10:00:00 +0000',
-      snippet: 'Test snippet',
-      body: 'Test body',
-      labels: ['INBOX']
-    }
+  let(:gmail_adapter) { double('GmailAdapter') }
+  let(:yahoo_adapter) { double('YahooAdapter') }
+  let(:registry) do
+    r = ProviderRegistry.new
+    r.register('gmail', gmail_adapter)
+    r.register('yahoo', yahoo_adapter)
+    r
   end
 
-  before { described_class.gmail_service = gmail }
+  let(:gmail_email) do
+    { id: 'msg_123', thread_id: 'thread_123', subject: 'Test Subject',
+      from: 'sender@example.com', to: 'me@gmail.com',
+      date: 'Mon, 20 Feb 2026 10:00:00 +0000',
+      snippet: 'Test snippet', body: 'Test body', labels: ['INBOX'] }
+  end
+
+  let(:yahoo_email) do
+    { id: 101, subject: 'Test Subject', from: 'sender@example.com',
+      to: 'me@yahoo.com', date: 'Mon, 20 Feb 2026 10:00:00 +0000',
+      snippet: 'Test snippet', body: 'Test body', folders: ['INBOX'] }
+  end
+
+  before { described_class.registry = registry }
 
   describe '#call' do
-    it 'calls get_message with the given message_id' do
-      expect(gmail).to receive(:get_message).with('msg_123').and_return(sample_email)
-      tool = described_class.new
-      result = tool.call(message_id: 'msg_123')
-      expect(result).to eq(sample_email)
+    context 'with provider: "gmail"' do
+      it 'calls get_message on the gmail adapter' do
+        expect(gmail_adapter).to receive(:get_message).with('msg_123', mailbox: 'INBOX').and_return(gmail_email)
+        result = described_class.new.call(provider: 'gmail', message_id: 'msg_123')
+        expect(result).to eq(gmail_email)
+      end
+
+      it 'passes a custom mailbox' do
+        expect(gmail_adapter).to receive(:get_message).with('msg_123', mailbox: 'Sent').and_return(gmail_email)
+        described_class.new.call(provider: 'gmail', message_id: 'msg_123', mailbox: 'Sent')
+      end
     end
 
-    it 'returns the hash with all expected keys' do
-      allow(gmail).to receive(:get_message).with('msg_123').and_return(sample_email)
-      tool = described_class.new
-      result = tool.call(message_id: 'msg_123')
-      expect(result.keys).to include(:id, :thread_id, :subject, :from, :to, :date, :snippet, :body, :labels)
+    context 'with provider: "yahoo"' do
+      it 'calls get_message on the yahoo adapter with mailbox' do
+        expect(yahoo_adapter).to receive(:get_message).with('101', mailbox: 'INBOX').and_return(yahoo_email)
+        result = described_class.new.call(provider: 'yahoo', message_id: '101')
+        expect(result).to eq(yahoo_email)
+      end
     end
 
-    context 'when Gmail API raises an error' do
-      it 'propagates the error' do
-        allow(gmail).to receive(:get_message).and_raise(Google::Apis::Error.new('Not found'))
-        tool = described_class.new
-        expect { tool.call(message_id: 'nonexistent') }.to raise_error(Google::Apis::Error)
+    context 'with an unknown provider' do
+      it 'raises ProviderRegistry::UnknownProviderError' do
+        expect { described_class.new.call(provider: 'outlook', message_id: 'id') }
+          .to raise_error(ProviderRegistry::UnknownProviderError)
       end
     end
   end

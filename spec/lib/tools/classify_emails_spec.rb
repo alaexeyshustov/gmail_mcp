@@ -1,4 +1,5 @@
 require_relative '../../spec_helper'
+require_relative '../../../lib/provider_registry'
 require_relative '../../../lib/email_classifier'
 require_relative '../../../lib/tools/classify_emails'
 

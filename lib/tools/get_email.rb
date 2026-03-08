@@ -1,21 +1,26 @@
 require 'fast_mcp'
-require_relative '../gmail_service'
+require_relative '../provider_registry'
 
 module Tools
   class GetEmail < FastMcp::Tool
     tool_name 'get_email'
-    description 'Get the full content of a specific email by its Gmail message ID'
+    description 'Get the full content of a specific email by its message ID or IMAP UID.'
 
     arguments do
-      required(:message_id).filled(:string).description('The Gmail message ID (e.g. "18d3f1a2b3c4d5e6")')
+      required(:provider).filled(:string)
+        .description('Email provider: "gmail" or "yahoo"')
+      required(:message_id).filled(:string)
+        .description('The message ID (Gmail string ID or Yahoo IMAP UID as string).')
+      optional(:mailbox).filled(:string)
+        .description('Yahoo: mailbox/folder containing the message. Defaults to INBOX.')
     end
 
-    def call(message_id:)
-      self.class.gmail_service.get_message(message_id)
+    def call(provider:, message_id:, mailbox: 'INBOX')
+      self.class.registry.fetch(provider).get_message(message_id, mailbox: mailbox)
     end
 
     class << self
-      attr_accessor :gmail_service
+      attr_accessor :registry
     end
   end
 end

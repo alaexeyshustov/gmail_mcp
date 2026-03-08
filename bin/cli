@@ -3,7 +3,7 @@
 require 'dry/cli'
 require 'fileutils'
 require 'dotenv/load'
-require_relative '../lib/gmail_auth'
+require_relative '../lib/services/gmail_auth'
 
 module CLI
   module Commands

@@ -1,8 +1,8 @@
-# CLAUDE.md — Agent Instructions for Gmail MCP Server
+# CLAUDE.md — Agent Instructions for Mail MCP Server
 
 ## Project Overview
 
-This is a **Ruby** MCP (Model Context Protocol) server that exposes Gmail as tools for AI agents. It uses the `fast-mcp` gem for the MCP server, `google-apis-gmail_v1` for Gmail API access, and `ruby_llm` with Gemini for email classification.
+This is a **Ruby** MCP (Model Context Protocol) server that exposes Gmail **and** Yahoo Mail as unified tools for AI agents. It uses the `fast-mcp` gem for the MCP server, a provider-adapter pattern (`Adapters::GmailAdapter`, `Adapters::YahooAdapter`) behind a `ProviderRegistry`, and `ruby_llm` for email classification.
 
 **Language: Ruby (3.1+). Do NOT use Python anywhere in this project.**
 
@@ -20,30 +20,45 @@ This is a **Ruby** MCP (Model Context Protocol) server that exposes Gmail as too
 ## Project Structure
 
 ```
-gmail_mcp/
-├── bin/cli                      # Dry::CLI entry point (setup, test, reset, status, server)
+mail_mcp/
+├── bin/cli                          # Dry::CLI entry point (setup, test, reset, status, server)
 ├── lib/
-│   ├── mcp_server.rb            # MCP server entry point — registers all tools, starts FastMcp::Server
-│   ├── gmail_service.rb         # Gmail API wrapper (OAuth, list, get, search, modify labels)
-│   ├── gmail_auth.rb            # Google OAuth2 loopback flow (browser → localhost callback)
-│   ├── email_classifier.rb      # Gemini-based email classification via ruby_llm
-│   └── tools/                   # One file per MCP tool (FastMcp::Tool subclasses)
+│   ├── mcp_server.rb                # MCP server entry point — boots both adapters, registers tools
+│   ├── provider_registry.rb         # { "gmail" => GmailAdapter, "yahoo" => YahooAdapter }
+│   ├── email_classifier.rb          # Mistral-based email classification via ruby_llm
+│   ├── adapters/
+│   │   ├── base_adapter.rb          # Abstract interface all adapters must implement
+│   │   ├── gmail_adapter.rb         # Wraps GmailService, conforms to base interface
+│   │   └── yahoo_adapter.rb         # Wraps YahooMailService, conforms to base interface
+│   ├── services/
+│   │   ├── gmail_service.rb         # Gmail API wrapper (OAuth, list, get, search, modify labels)
+│   │   ├── gmail_auth.rb            # Google OAuth2 loopback flow (browser → localhost callback)
+│   │   └── yahoo_mail_service.rb    # Yahoo IMAP wrapper (Net::IMAP)
+│   └── tools/                       # One file per MCP tool — each accepts a `provider:` argument
 │       ├── list_emails.rb
 │       ├── get_email.rb
 │       ├── search_emails.rb
-│       ├── get_labels.rb
+│       ├── get_labels.rb            # Returns Gmail labels or Yahoo folders (unified shape)
 │       ├── get_unread_count.rb
-│       ├── add_labels.rb
-│       └── classify_emails.rb
+│       ├── add_labels.rb            # Gmail: label IDs; Yahoo: IMAP flags
+│       └── classify_emails.rb       # Provider-agnostic (works on subject lines)
 ├── spec/
-│   ├── spec_helper.rb           # RSpec config + WebMock (no real HTTP in tests)
+│   ├── spec_helper.rb               # RSpec config + WebMock + VCR
 │   ├── support/
-│   │   └── gmail_fixtures.rb    # Shared test doubles & helpers
+│   │   ├── gmail_fixtures.rb        # Gmail shared test doubles & helpers
+│   │   └── yahoo_mail_fixtures.rb   # Yahoo shared test doubles & helpers
 │   └── lib/
-│       ├── gmail_service_spec.rb
-│       ├── gmail_auth_spec.rb
+│       ├── adapters/
+│       │   ├── base_adapter_spec.rb
+│       │   ├── gmail_adapter_spec.rb
+│       │   └── yahoo_adapter_spec.rb
+│       ├── services/
+│       │   ├── gmail_service_spec.rb
+│       │   └── yahoo_mail_service_spec.rb
+│       ├── provider_registry_spec.rb
 │       ├── email_classifier_spec.rb
-│       └── tools/               # One spec per tool — mirrors lib/tools/
+│       ├── gmail_auth_spec.rb
+│       └── tools/                   # One spec per tool — tests both gmail and yahoo providers
 │           ├── list_emails_spec.rb
 │           ├── get_email_spec.rb
 │           ├── search_emails_spec.rb
@@ -52,26 +67,39 @@ gmail_mcp/
 │           ├── add_labels_spec.rb
 │           └── classify_emails_spec.rb
 ├── Gemfile
-├── .env.example                 # Environment variable template
-├── .rspec                       # RSpec config (--format documentation --color)
-└── credentials.json.example     # OAuth credentials template
+├── .env.example                     # Environment variable template (Gmail + Yahoo)
+└── credentials.json.example         # OAuth credentials template
 ```
 
 ---
 
 ## Commands
 
-| Task                   | Command                                                                        |
-| ---------------------- | ------------------------------------------------------------------------------ |
-| Install dependencies   | `bundle install`                                                               |
-| Run all tests          | `bundle exec rspec`                                                            |
-| Run a single spec file | `bundle exec rspec spec/lib/tools/list_emails_spec.rb`                         |
-| Run a specific test    | `bundle exec rspec spec/lib/tools/list_emails_spec.rb -e "passes max_results"` |
-| Start MCP server       | `bundle exec ruby lib/mcp_server.rb`                                           |
-| CLI setup              | `bin/cli setup`                                                                |
-| CLI test (live Gmail)  | `bin/cli test`                                                                 |
-| CLI status             | `bin/cli status`                                                               |
-| CLI reset auth         | `bin/cli reset`                                                                |
+| Task                   | Command                                                                         |
+| ---------------------- | ------------------------------------------------------------------------------- |
+| Install dependencies   | `bundle install`                                                                |
+| Run all tests          | `bundle exec rspec`                                                             |
+| Run a single spec file | `bundle exec rspec spec/lib/tools/list_emails_spec.rb`                          |
+| Run a specific test    | `bundle exec rspec spec/lib/tools/list_emails_spec.rb -e "calls list_messages"` |
+| Start MCP server       | `bundle exec ruby lib/mcp_server.rb`                                            |
+| CLI setup              | `bin/cli setup`                                                                 |
+| CLI test (live Gmail)  | `bin/cli test`                                                                  |
+| CLI status             | `bin/cli status`                                                                |
+| CLI reset auth         | `bin/cli reset`                                                                 |
+
+---
+
+## Architecture Notes
+
+- **Provider adapter pattern**: Tools call `self.class.registry.fetch(provider)` to get the right adapter (`GmailAdapter` or `YahooAdapter`). Adapters inherit from `Adapters::BaseAdapter` and wrap the underlying services.
+- **ProviderRegistry**: Holds a name → adapter hash. Adapters are registered only when credentials are present (Gmail: `credentials.json`; Yahoo: `YAHOO_USERNAME` + `YAHOO_APP_PASSWORD`).
+- **Dependency injection**: Tools receive the registry through a class-level accessor (`registry=`), set in `mcp_server.rb`. The classifier uses a separate `classifier=` accessor.
+- **Single service instances**: `GmailService` and `YahooMailService` are created once in `mcp_server.rb` and shared across their respective adapters.
+- **Tool `provider` argument**: Every tool (except `classify_emails`) requires `provider: "gmail"` or `provider: "yahoo"`. Unsupported providers raise `ProviderRegistry::UnknownProviderError`.
+- **OAuth scope** (Gmail): `gmail.modify` — read and label modification, no send/delete.
+- **IMAP connection** (Yahoo): persistent `Net::IMAP` connection with mutex + auto-reconnect; `at_exit` calls `disconnect`.
+- **MCP transport**: stdio only (stdin/stdout JSON-RPC). No HTTP server.
+- **Environment variables**: Loaded via `dotenv`. See `.env.example`.
 
 ---
 
@@ -82,38 +110,51 @@ gmail_mcp/
 Before writing code, outline:
 
 - Tool name and description
-- Required and optional arguments with types
-- Which `GmailService` method(s) the tool will call
-- Whether `GmailService` needs a new method
+- Required and optional arguments with types (always include `provider:` as required)
+- Which adapter method(s) the tool will call
+- Whether `BaseAdapter` / adapters need new methods
 - Edge cases and error scenarios
 
 ### Step 2: Write the spec first
 
-Create `spec/lib/tools/<tool_name>_spec.rb` following the existing pattern:
+Create `spec/lib/tools/<tool_name>_spec.rb` following the pattern below. Test both providers:
 
 ```ruby
 require_relative '../../spec_helper'
-require_relative '../../../lib/gmail_service'
+require_relative '../../../lib/provider_registry'
 require_relative '../../../lib/tools/<tool_name>'
 
 RSpec.describe Tools::<ToolClass> do
-  let(:gmail) { instance_double(GmailService) }
+  let(:gmail_adapter) { double('GmailAdapter') }
+  let(:yahoo_adapter) { double('YahooAdapter') }
+  let(:registry) do
+    r = ProviderRegistry.new
+    r.register('gmail', gmail_adapter)
+    r.register('yahoo', yahoo_adapter)
+    r
+  end
 
-  before { described_class.gmail_service = gmail }
+  before { described_class.registry = registry }
 
   describe '#call' do
-    it 'calls the expected GmailService method with correct arguments' do
-      expect(gmail).to receive(:<service_method>).with(<args>).and_return(<result>)
-      tool = described_class.new
-      result = tool.call(<tool_args>)
-      expect(result).to eq(<result>)
+    context 'with provider: "gmail"' do
+      it 'calls the expected adapter method' do
+        expect(gmail_adapter).to receive(:<method>).with(<args>).and_return(<result>)
+        expect(described_class.new.call(provider: 'gmail', <args>)).to eq(<result>)
+      end
     end
 
-    context 'when Gmail API raises an error' do
-      it 'propagates the error' do
-        allow(gmail).to receive(:<service_method>).and_raise(Google::Apis::Error.new('API error'))
-        tool = described_class.new
-        expect { tool.call(<tool_args>) }.to raise_error(Google::Apis::Error)
+    context 'with provider: "yahoo"' do
+      it 'delegates to the yahoo adapter' do
+        expect(yahoo_adapter).to receive(:<method>).and_return(<result>)
+        described_class.new.call(provider: 'yahoo', <args>)
+      end
+    end
+
+    context 'with an unknown provider' do
+      it 'raises ProviderRegistry::UnknownProviderError' do
+        expect { described_class.new.call(provider: 'invalid', <required_args>) }
+          .to raise_error(ProviderRegistry::UnknownProviderError)
       end
     end
   end
@@ -132,7 +173,7 @@ Create `lib/tools/<tool_name>.rb` following the existing pattern:
 
 ```ruby
 require 'fast_mcp'
-require_relative '../gmail_service'
+require_relative '../provider_registry'
 
 module Tools
   class <ToolClass> < FastMcp::Tool
@@ -140,16 +181,17 @@ module Tools
     description '<Human-readable description for LLM agents>'
 
     arguments do
+      required(:provider).filled(:string).description('Email provider: "gmail" or "yahoo"')
       required(:<arg>).filled(:string).description('<description>')
       optional(:<arg>).filled(:integer).description('<description>')
     end
 
-    def call(<keyword_args>)
-      self.class.gmail_service.<service_method>(<args>)
+    def call(provider:, <keyword_args>)
+      self.class.registry.fetch(provider).<adapter_method>(<args>)
     end
 
     class << self
-      attr_accessor :gmail_service
+      attr_accessor :registry
     end
   end
 end
@@ -160,14 +202,41 @@ end
 In `lib/mcp_server.rb`:
 
 1. Add `require_relative 'tools/<tool_name>'` at the top
-2. Add `Tools::<ToolClass>` to the `gmail_service` injection array (if it uses Gmail)
-3. Add `Tools::<ToolClass>` to `server.register_tools(...)`
+2. Add `Tools::<ToolClass>` to the `ALL_TOOLS` constant
+3. (The registry injection loop handles the rest automatically)
 
 ### Step 5: Run specs
 
 ```bash
 bundle exec rspec spec/lib/tools/<tool_name>_spec.rb
 bundle exec rspec  # full suite — must stay green
+```
+
+---
+
+## How to Add a New Adapter Method
+
+### Step 1: Plan
+
+Outline the underlying service call, parameters, and return shape.
+
+### Step 2: Add to BaseAdapter
+
+Add an `abstract` method to `lib/adapters/base_adapter.rb` that raises `NotImplementedError`.
+
+### Step 3: Write specs first
+
+Add tests to both `spec/lib/adapters/gmail_adapter_spec.rb` and `spec/lib/adapters/yahoo_adapter_spec.rb`.
+
+### Step 4: Implement in both adapters
+
+- `lib/adapters/gmail_adapter.rb` — delegate to `GmailService`
+- `lib/adapters/yahoo_adapter.rb` — delegate to `YahooMailService` (mapping Yahoo-specific concepts as needed)
+
+### Step 5: Run specs
+
+```bash
+bundle exec rspec spec/lib/adapters/
 ```
 
 ---
@@ -180,16 +249,16 @@ Outline the Gmail API call, parameters, and return shape.
 
 ### Step 2: Write the spec first
 
-Add tests to `spec/lib/gmail_service_spec.rb` using `VCR.use_cassette`. Create the cassette YAML file in `spec/cassettes/gmail_service/` before writing the test.
+Add tests to `spec/lib/services/gmail_service_spec.rb` using `VCR.use_cassette`. Create the cassette YAML file in `spec/cassettes/gmail_service/`.
 
 ### Step 3: Implement
 
-Add the method to `lib/gmail_service.rb`. The service wraps `@service` (a `Google::Apis::GmailV1::GmailService` instance). Always return plain Ruby hashes/arrays, not Google API objects.
+Add the method to `lib/services/gmail_service.rb`. Always return plain Ruby hashes/arrays, not Google API objects.
 
 ### Step 4: Run specs
 
 ```bash
-bundle exec rspec spec/lib/gmail_service_spec.rb
+bundle exec rspec spec/lib/services/gmail_service_spec.rb
 ```
 
 ---
@@ -198,104 +267,20 @@ bundle exec rspec spec/lib/gmail_service_spec.rb
 
 - **Framework**: RSpec with `--format documentation`
 - **HTTP mocking**: WebMock is enabled globally — all real HTTP is blocked in tests
-- **Test doubles**: Use `instance_double(GmailService)` for tools, VCR cassettes for the `GmailService` and `EmailClassifier` layers
-- **Fixtures**: Shared helpers in `spec/support/gmail_fixtures.rb` — use `sample_email_message`, `sample_email_headers`, `sample_email_payload`, `sample_label`
-- **No monkey patching**: `config.disable_monkey_patching!` is on — use `RSpec.describe`, not `describe`
+- **Test doubles**:
+  - Tool specs: `double('GmailAdapter')` / `double('YahooAdapter')` + real `ProviderRegistry`
+  - Adapter specs: `instance_double(GmailService)` / `instance_double(YahooMailService)`
+  - Service specs: VCR cassettes (Gmail) or `instance_double(Net::IMAP)` (Yahoo)
+- **Fixtures**: `spec/support/gmail_fixtures.rb` and `spec/support/yahoo_mail_fixtures.rb`
+- **No monkey patching**: `config.disable_monkey_patching!` is on
 - **File naming**: Spec files mirror `lib/` structure under `spec/lib/`
-- **Tool specs always test**: `#call` with valid args, `#call` error propagation, `.tool_name`
+- **Tool specs always test**: `#call` with `provider: 'gmail'`, `#call` with `provider: 'yahoo'`, unknown provider raises error, `.tool_name`
 
 ---
 
 ## VCR Cassette Conventions
 
-VCR intercepts outgoing HTTP calls and replays pre-recorded responses from YAML cassette files, replacing Ruby-object-level mocks for the `GmailService` and `EmailClassifier` layers.
-
-### When to use VCR vs mocks
-
-| Layer                                  | Strategy                                                        |
-| -------------------------------------- | --------------------------------------------------------------- |
-| `lib/tools/*.rb`                       | `instance_double(GmailService)` — pure unit tests, no HTTP      |
-| `lib/gmail_service.rb`                 | VCR cassettes — tests the real Google API client parsing        |
-| `lib/email_classifier.rb` (happy path) | VCR cassettes — tests the real ruby_llm parsing                 |
-| `lib/email_classifier.rb` (edge cases) | RSpec mocks — behavioural / reshaping logic                     |
-| `lib/gmail_auth.rb`                    | RSpec mocks — OAuth loop-back flow uses TCPServer, not raw HTTP |
-
-### Cassette location
-
-```
-spec/cassettes/
-├── gmail_service/
-│   ├── list_messages_default.yml   # GET /messages → 2 messages + full GET each
-│   ├── list_messages_empty.yml     # GET /messages → empty result
-│   ├── get_message.yml             # GET /messages/msg_123
-│   ├── get_message_no_headers.yml  # GET /messages/msg_empty (no headers)
-│   ├── get_message_multipart.yml   # GET /messages/msg_multi (multipart body)
-│   ├── get_labels.yml              # GET /labels
-│   ├── get_unread_count.yml        # GET /labels/UNREAD → messagesTotal: 42
-│   ├── get_unread_count_nil.yml    # GET /labels/UNREAD → messagesTotal absent
-│   ├── modify_labels_add.yml       # POST /messages/msg_123/modify → add STARRED
-│   ├── modify_labels_remove.yml    # POST /messages/msg_123/modify → remove STARRED
-│   ├── modify_labels_nil_labels.yml# POST → response omits labelIds
-│   └── modify_labels_error.yml     # POST → 403 Forbidden
-└── email_classifier/
-    └── classify.yml                # POST to Gemini generateContent
-```
-
-### Cassette format rules
-
-1. **RFC 2616 date** — `recorded_at` must be httpdate format, e.g. `"Fri, 20 Feb 2026 10:00:00 GMT"`. ISO 8601 (`2026-02-...`) will cause `ArgumentError`.
-2. **Response headers as arrays** — each header value must be a YAML sequence, e.g. `Content-Type:\n  - application/json`.
-3. **Matching strategy** — `[:method, :host, :path]` (query params and auth headers are ignored).
-4. **Base64 body data** — Gmail API body.data is base64url-encoded in cassettes; the gem auto-decodes it so Ruby code sees plain text.
-
-### Using VCR in a test
-
-```ruby
-it 'returns labels' do
-  VCR.use_cassette('gmail_service/get_labels') do
-    result = client.get_labels
-    expect(result.first).to include(:id, :name, :type)
-  end
-end
-```
-
-### Fake credentials for GmailService VCR tests
-
-```ruby
-let(:fake_credentials) do
-  Class.new do
-    def universe_domain; 'googleapis.com'; end  # required by google-apis-core
-    def apply!(headers); end                     # no-op; VCR stubs HTTP
-    def apply(headers);  end
-    def principal; nil; end
-  end.new
-end
-
-subject(:client) do
-  allow_any_instance_of(GmailService).to receive(:authorize).and_return(fake_credentials)
-  GmailService.new(credentials_path: '/fake/credentials.json', token_path: '/fake/token.yaml')
-end
-```
-
-> **Why a concrete class, not a double?** RSpec's `as_null_object` makes doubles respond `true` to `respond_to?(:to_ary)`, which causes Faraday's `Headers#[]=` to call `nil.join` and crash. A plain Ruby class avoids this.
-
-### Adding a new cassette
-
-1. Add the cassette YAML to `spec/cassettes/<service>/<name>.yml`
-2. Record the interactions (or craft them manually using the existing cassettes as templates)
-3. Ensure `recorded_at` is RFC 2616 (use `Time.now.httpdate` in Ruby to generate one)
-4. Reference it in your spec: `VCR.use_cassette('<service>/<name>') do ... end`
-
----
-
-## Architecture Notes
-
-- **Dependency Injection**: Tools receive their dependencies through class-level accessors (`gmail_service=`, `classifier=`), set in `mcp_server.rb`. This allows easy mocking in tests.
-- **Single GmailService instance**: Created once in `mcp_server.rb` and shared across all tool classes.
-- **OAuth scope**: `gmail.modify` (allows reading and label modification, but not sending/deleting).
-- **MCP transport**: stdio only (stdin/stdout JSON-RPC). No HTTP server.
-- **fast-mcp DSL**: Tools inherit from `FastMcp::Tool` and use `tool_name`, `description`, and `arguments` DSL.
-- **Environment variables**: Loaded via `dotenv`. See `.env.example` for `CREDENTIALS_PATH`, `TOKEN_PATH`, `GEMINI_API_KEY`.
+_(Unchanged — see original conventions. Cassettes live in `spec/cassettes/gmail_service/` and `spec/cassettes/email_classifier/`.)_
 
 ---
 

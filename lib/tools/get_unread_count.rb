@@ -1,17 +1,24 @@
 require 'fast_mcp'
-require_relative '../gmail_service'
+require_relative '../provider_registry'
 
 module Tools
   class GetUnreadCount < FastMcp::Tool
     tool_name 'get_unread_count'
-    description 'Get the total number of unread emails in the Gmail inbox'
+    description 'Get the number of unread emails in Gmail inbox or a Yahoo Mail folder.'
 
-    def call
-      self.class.gmail_service.get_unread_count
+    arguments do
+      required(:provider).filled(:string)
+        .description('Email provider: "gmail" or "yahoo"')
+      optional(:mailbox).filled(:string)
+        .description('Yahoo: mailbox/folder to check. Defaults to INBOX.')
+    end
+
+    def call(provider:, mailbox: 'INBOX')
+      self.class.registry.fetch(provider).get_unread_count(mailbox: mailbox)
     end
 
     class << self
-      attr_accessor :gmail_service
+      attr_accessor :registry
     end
   end
 end

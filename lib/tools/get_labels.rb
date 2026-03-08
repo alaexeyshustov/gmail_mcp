@@ -1,17 +1,22 @@
 require 'fast_mcp'
-require_relative '../gmail_service'
+require_relative '../provider_registry'
 
 module Tools
   class GetLabels < FastMcp::Tool
     tool_name 'get_labels'
-    description 'List all Gmail labels including system labels (INBOX, SENT, TRASH) and user-created labels'
+    description 'List all labels (Gmail) or folders (Yahoo), including system and user-created ones.'
 
-    def call
-      self.class.gmail_service.get_labels
+    arguments do
+      required(:provider).filled(:string)
+        .description('Email provider: "gmail" or "yahoo"')
+    end
+
+    def call(provider:)
+      self.class.registry.fetch(provider).get_labels
     end
 
     class << self
-      attr_accessor :gmail_service
+      attr_accessor :registry
     end
   end
 end
