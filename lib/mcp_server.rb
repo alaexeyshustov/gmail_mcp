@@ -17,6 +17,7 @@ require_relative 'tools/get_labels'
 require_relative 'tools/get_unread_count'
 require_relative 'tools/add_labels'
 require_relative 'tools/classify_emails'
+require_relative 'tools/manage_csv'
 
 # ---------------------------------------------------------------------------
 # Build the provider registry — register only configured providers
@@ -70,7 +71,8 @@ ALL_TOOLS = [
   Tools::GetLabels,
   Tools::GetUnreadCount,
   Tools::AddLabels,
-  Tools::ClassifyEmails
+  Tools::ClassifyEmails,
+  Tools::ManageCsv
 ].freeze
 
 ALL_TOOLS.each { |tool_class| tool_class.registry = registry }
