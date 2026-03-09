@@ -62,10 +62,6 @@ Add to `.vscode/mcp.json` or your user settings:
 3. `credentials.json` present (downloaded from Google Cloud Console)
 4. `token.yaml` present — run the OAuth flow once:
 
-```bash
-cd /Users/aleksey.shustov/gmail_mcp
-bundle exec ruby -e "require_relative 'lib/gmail_service'; GmailService.new(credentials_path: 'credentials.json', token_path: 'token.yaml')"
-```
 
 Follow the printed URL, authorise in the browser, paste the code back into
 the terminal. `token.yaml` is created and saved automatically. The server
@@ -86,15 +82,7 @@ access token automatically.
 ## Manual server test (terminal)
 
 ```bash
-cd /Users/aleksey.shustov/gmail_mcp
-
-# 1. Verify tools are registered
-printf '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"test","version":"0.1.0"}}}\n{"jsonrpc":"2.0","id":2,"method":"tools/list","params":{}}\n' \
-  | ./bin/cli server
-
-# 2. Call get_unread_count
-printf '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"test","version":"0.1.0"}}}\n{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"get_unread_count","arguments":{}}}\n' \
-  | ./bin/cli server
+./bin/cli setup
 ```
 
 ## Troubleshooting

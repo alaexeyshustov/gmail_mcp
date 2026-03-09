@@ -52,7 +52,7 @@ module CLI
         puts '=== Setup complete! ==='
         puts
         puts 'To start the server, run:'
-        puts 'bin/gmail_mcp server'
+        puts 'bin/cli server'
         puts
         puts 'For GitHub Copilot integration, see README.md'
       end
@@ -179,7 +179,7 @@ module CLI
         if File.exist?(token_path)
           File.delete(token_path)
           puts "✓ Token deleted: #{token_path}"
-          puts '  Run `bin/gmail_mcp setup` or `bin/gmail_mcp test` to re-authorize.'
+          puts '  Run `bin/cli setup` or `bin/cli test` to re-authorize.'
         else
           puts "✓ No token found at #{token_path} (already clean)"
         end
