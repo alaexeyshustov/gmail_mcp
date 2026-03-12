@@ -1,7 +1,4 @@
 require_relative '../../spec_helper'
-require_relative '../../../lib/provider_registry'
-require_relative '../../../lib/email_classifier'
-require_relative '../../../lib/tools/classify_emails'
 
 RSpec.describe Tools::ClassifyEmails do
   let(:classifier) { instance_double(EmailClassifier) }

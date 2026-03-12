@@ -1,0 +1,158 @@
+---
+# 30 gmail emails: Init, FetchGmail(30), FetchYahoo([]), Classify(30), LabelStore×2, Reconcile
+http_interactions:
+  - request:
+      method: post
+      uri: https://api.mistral.ai/v1/chat/completions
+      body:
+        encoding: UTF-8
+        string: ""
+      headers:
+        Content-Type:
+          - application/json
+        Accept:
+          - "*/*"
+    response:
+      status:
+        code: 200
+        message: OK
+      headers:
+        Content-Type:
+          - application/json; charset=UTF-8
+      body:
+        encoding: UTF-8
+        string: '{"id":"chat-lb-1","object":"chat.completion","model":"mistral-large-latest","choices":[{"index":0,"message":{"role":"assistant","content":"{\"latest_date\":\"2026-03-10\",\"existing_ids\":[]}","tool_calls":null},"finish_reason":"stop"}],"usage":{"prompt_tokens":100,"completion_tokens":50,"total_tokens":150}}'
+    recorded_at: "Mon, 10 Mar 2026 10:00:01 GMT"
+  - request:
+      method: post
+      uri: https://api.mistral.ai/v1/chat/completions
+      body:
+        encoding: UTF-8
+        string: ""
+      headers:
+        Content-Type:
+          - application/json
+        Accept:
+          - "*/*"
+    response:
+      status:
+        code: 200
+        message: OK
+      headers:
+        Content-Type:
+          - application/json; charset=UTF-8
+      body:
+        encoding: UTF-8
+        string: '{"id":"chat-lb-2","object":"chat.completion","model":"mistral-large-latest","choices":[{"index":0,"message":{"role":"assistant","content":"[{\"id\":\"email_1\",\"subject\":\"Job 1\",\"date\":\"2026-02-01\",\"from\":\"hr@co.com\"},{\"id\":\"email_2\",\"subject\":\"Job 2\",\"date\":\"2026-02-01\",\"from\":\"hr@co.com\"},{\"id\":\"email_3\",\"subject\":\"Job 3\",\"date\":\"2026-02-01\",\"from\":\"hr@co.com\"},{\"id\":\"email_4\",\"subject\":\"Job 4\",\"date\":\"2026-02-01\",\"from\":\"hr@co.com\"},{\"id\":\"email_5\",\"subject\":\"Job 5\",\"date\":\"2026-02-01\",\"from\":\"hr@co.com\"},{\"id\":\"email_6\",\"subject\":\"Job 6\",\"date\":\"2026-02-01\",\"from\":\"hr@co.com\"},{\"id\":\"email_7\",\"subject\":\"Job 7\",\"date\":\"2026-02-01\",\"from\":\"hr@co.com\"},{\"id\":\"email_8\",\"subject\":\"Job 8\",\"date\":\"2026-02-01\",\"from\":\"hr@co.com\"},{\"id\":\"email_9\",\"subject\":\"Job 9\",\"date\":\"2026-02-01\",\"from\":\"hr@co.com\"},{\"id\":\"email_10\",\"subject\":\"Job 10\",\"date\":\"2026-02-01\",\"from\":\"hr@co.com\"},{\"id\":\"email_11\",\"subject\":\"Job 11\",\"date\":\"2026-02-01\",\"from\":\"hr@co.com\"},{\"id\":\"email_12\",\"subject\":\"Job 12\",\"date\":\"2026-02-01\",\"from\":\"hr@co.com\"},{\"id\":\"email_13\",\"subject\":\"Job 13\",\"date\":\"2026-02-01\",\"from\":\"hr@co.com\"},{\"id\":\"email_14\",\"subject\":\"Job 14\",\"date\":\"2026-02-01\",\"from\":\"hr@co.com\"},{\"id\":\"email_15\",\"subject\":\"Job 15\",\"date\":\"2026-02-01\",\"from\":\"hr@co.com\"},{\"id\":\"email_16\",\"subject\":\"Job 16\",\"date\":\"2026-02-01\",\"from\":\"hr@co.com\"},{\"id\":\"email_17\",\"subject\":\"Job 17\",\"date\":\"2026-02-01\",\"from\":\"hr@co.com\"},{\"id\":\"email_18\",\"subject\":\"Job 18\",\"date\":\"2026-02-01\",\"from\":\"hr@co.com\"},{\"id\":\"email_19\",\"subject\":\"Job 19\",\"date\":\"2026-02-01\",\"from\":\"hr@co.com\"},{\"id\":\"email_20\",\"subject\":\"Job 20\",\"date\":\"2026-02-01\",\"from\":\"hr@co.com\"},{\"id\":\"email_21\",\"subject\":\"Job 21\",\"date\":\"2026-02-01\",\"from\":\"hr@co.com\"},{\"id\":\"email_22\",\"subject\":\"Job 22\",\"date\":\"2026-02-01\",\"from\":\"hr@co.com\"},{\"id\":\"email_23\",\"subject\":\"Job 23\",\"date\":\"2026-02-01\",\"from\":\"hr@co.com\"},{\"id\":\"email_24\",\"subject\":\"Job 24\",\"date\":\"2026-02-01\",\"from\":\"hr@co.com\"},{\"id\":\"email_25\",\"subject\":\"Job 25\",\"date\":\"2026-02-01\",\"from\":\"hr@co.com\"},{\"id\":\"email_26\",\"subject\":\"Job 26\",\"date\":\"2026-02-01\",\"from\":\"hr@co.com\"},{\"id\":\"email_27\",\"subject\":\"Job 27\",\"date\":\"2026-02-01\",\"from\":\"hr@co.com\"},{\"id\":\"email_28\",\"subject\":\"Job 28\",\"date\":\"2026-02-01\",\"from\":\"hr@co.com\"},{\"id\":\"email_29\",\"subject\":\"Job 29\",\"date\":\"2026-02-01\",\"from\":\"hr@co.com\"},{\"id\":\"email_30\",\"subject\":\"Job 30\",\"date\":\"2026-02-01\",\"from\":\"hr@co.com\"}]","tool_calls":null},"finish_reason":"stop"}],"usage":{"prompt_tokens":100,"completion_tokens":50,"total_tokens":150}}'
+    recorded_at: "Mon, 10 Mar 2026 10:00:02 GMT"
+  - request:
+      method: post
+      uri: https://api.mistral.ai/v1/chat/completions
+      body:
+        encoding: UTF-8
+        string: ""
+      headers:
+        Content-Type:
+          - application/json
+        Accept:
+          - "*/*"
+    response:
+      status:
+        code: 200
+        message: OK
+      headers:
+        Content-Type:
+          - application/json; charset=UTF-8
+      body:
+        encoding: UTF-8
+        string: '{"id":"chat-lb-3","object":"chat.completion","model":"mistral-large-latest","choices":[{"index":0,"message":{"role":"assistant","content":"[]","tool_calls":null},"finish_reason":"stop"}],"usage":{"prompt_tokens":100,"completion_tokens":50,"total_tokens":150}}'
+    recorded_at: "Mon, 10 Mar 2026 10:00:03 GMT"
+  - request:
+      method: post
+      uri: https://api.mistral.ai/v1/chat/completions
+      body:
+        encoding: UTF-8
+        string: ""
+      headers:
+        Content-Type:
+          - application/json
+        Accept:
+          - "*/*"
+    response:
+      status:
+        code: 200
+        message: OK
+      headers:
+        Content-Type:
+          - application/json; charset=UTF-8
+      body:
+        encoding: UTF-8
+        string: '{"id":"chat-lb-4","object":"chat.completion","model":"mistral-large-latest","choices":[{"index":0,"message":{"role":"assistant","content":"[{\"id\":\"email_1\",\"subject\":\"Job 1\",\"date\":\"2026-02-01\",\"from\":\"hr@co.com\",\"title\":\"Job 1\",\"tags\":[\"job\"],\"provider\":\"gmail\"},{\"id\":\"email_2\",\"subject\":\"Job 2\",\"date\":\"2026-02-01\",\"from\":\"hr@co.com\",\"title\":\"Job 2\",\"tags\":[\"job\"],\"provider\":\"gmail\"},{\"id\":\"email_3\",\"subject\":\"Job 3\",\"date\":\"2026-02-01\",\"from\":\"hr@co.com\",\"title\":\"Job 3\",\"tags\":[\"job\"],\"provider\":\"gmail\"},{\"id\":\"email_4\",\"subject\":\"Job 4\",\"date\":\"2026-02-01\",\"from\":\"hr@co.com\",\"title\":\"Job 4\",\"tags\":[\"job\"],\"provider\":\"gmail\"},{\"id\":\"email_5\",\"subject\":\"Job 5\",\"date\":\"2026-02-01\",\"from\":\"hr@co.com\",\"title\":\"Job 5\",\"tags\":[\"job\"],\"provider\":\"gmail\"},{\"id\":\"email_6\",\"subject\":\"Job 6\",\"date\":\"2026-02-01\",\"from\":\"hr@co.com\",\"title\":\"Job 6\",\"tags\":[\"job\"],\"provider\":\"gmail\"},{\"id\":\"email_7\",\"subject\":\"Job 7\",\"date\":\"2026-02-01\",\"from\":\"hr@co.com\",\"title\":\"Job 7\",\"tags\":[\"job\"],\"provider\":\"gmail\"},{\"id\":\"email_8\",\"subject\":\"Job 8\",\"date\":\"2026-02-01\",\"from\":\"hr@co.com\",\"title\":\"Job 8\",\"tags\":[\"job\"],\"provider\":\"gmail\"},{\"id\":\"email_9\",\"subject\":\"Job 9\",\"date\":\"2026-02-01\",\"from\":\"hr@co.com\",\"title\":\"Job 9\",\"tags\":[\"job\"],\"provider\":\"gmail\"},{\"id\":\"email_10\",\"subject\":\"Job 10\",\"date\":\"2026-02-01\",\"from\":\"hr@co.com\",\"title\":\"Job 10\",\"tags\":[\"job\"],\"provider\":\"gmail\"},{\"id\":\"email_11\",\"subject\":\"Job 11\",\"date\":\"2026-02-01\",\"from\":\"hr@co.com\",\"title\":\"Job 11\",\"tags\":[\"job\"],\"provider\":\"gmail\"},{\"id\":\"email_12\",\"subject\":\"Job 12\",\"date\":\"2026-02-01\",\"from\":\"hr@co.com\",\"title\":\"Job 12\",\"tags\":[\"job\"],\"provider\":\"gmail\"},{\"id\":\"email_13\",\"subject\":\"Job 13\",\"date\":\"2026-02-01\",\"from\":\"hr@co.com\",\"title\":\"Job 13\",\"tags\":[\"job\"],\"provider\":\"gmail\"},{\"id\":\"email_14\",\"subject\":\"Job 14\",\"date\":\"2026-02-01\",\"from\":\"hr@co.com\",\"title\":\"Job 14\",\"tags\":[\"job\"],\"provider\":\"gmail\"},{\"id\":\"email_15\",\"subject\":\"Job 15\",\"date\":\"2026-02-01\",\"from\":\"hr@co.com\",\"title\":\"Job 15\",\"tags\":[\"job\"],\"provider\":\"gmail\"},{\"id\":\"email_16\",\"subject\":\"Job 16\",\"date\":\"2026-02-01\",\"from\":\"hr@co.com\",\"title\":\"Job 16\",\"tags\":[\"job\"],\"provider\":\"gmail\"},{\"id\":\"email_17\",\"subject\":\"Job 17\",\"date\":\"2026-02-01\",\"from\":\"hr@co.com\",\"title\":\"Job 17\",\"tags\":[\"job\"],\"provider\":\"gmail\"},{\"id\":\"email_18\",\"subject\":\"Job 18\",\"date\":\"2026-02-01\",\"from\":\"hr@co.com\",\"title\":\"Job 18\",\"tags\":[\"job\"],\"provider\":\"gmail\"},{\"id\":\"email_19\",\"subject\":\"Job 19\",\"date\":\"2026-02-01\",\"from\":\"hr@co.com\",\"title\":\"Job 19\",\"tags\":[\"job\"],\"provider\":\"gmail\"},{\"id\":\"email_20\",\"subject\":\"Job 20\",\"date\":\"2026-02-01\",\"from\":\"hr@co.com\",\"title\":\"Job 20\",\"tags\":[\"job\"],\"provider\":\"gmail\"},{\"id\":\"email_21\",\"subject\":\"Job 21\",\"date\":\"2026-02-01\",\"from\":\"hr@co.com\",\"title\":\"Job 21\",\"tags\":[\"job\"],\"provider\":\"gmail\"},{\"id\":\"email_22\",\"subject\":\"Job 22\",\"date\":\"2026-02-01\",\"from\":\"hr@co.com\",\"title\":\"Job 22\",\"tags\":[\"job\"],\"provider\":\"gmail\"},{\"id\":\"email_23\",\"subject\":\"Job 23\",\"date\":\"2026-02-01\",\"from\":\"hr@co.com\",\"title\":\"Job 23\",\"tags\":[\"job\"],\"provider\":\"gmail\"},{\"id\":\"email_24\",\"subject\":\"Job 24\",\"date\":\"2026-02-01\",\"from\":\"hr@co.com\",\"title\":\"Job 24\",\"tags\":[\"job\"],\"provider\":\"gmail\"},{\"id\":\"email_25\",\"subject\":\"Job 25\",\"date\":\"2026-02-01\",\"from\":\"hr@co.com\",\"title\":\"Job 25\",\"tags\":[\"job\"],\"provider\":\"gmail\"},{\"id\":\"email_26\",\"subject\":\"Job 26\",\"date\":\"2026-02-01\",\"from\":\"hr@co.com\",\"title\":\"Job 26\",\"tags\":[\"job\"],\"provider\":\"gmail\"},{\"id\":\"email_27\",\"subject\":\"Job 27\",\"date\":\"2026-02-01\",\"from\":\"hr@co.com\",\"title\":\"Job 27\",\"tags\":[\"job\"],\"provider\":\"gmail\"},{\"id\":\"email_28\",\"subject\":\"Job 28\",\"date\":\"2026-02-01\",\"from\":\"hr@co.com\",\"title\":\"Job 28\",\"tags\":[\"job\"],\"provider\":\"gmail\"},{\"id\":\"email_29\",\"subject\":\"Job 29\",\"date\":\"2026-02-01\",\"from\":\"hr@co.com\",\"title\":\"Job 29\",\"tags\":[\"job\"],\"provider\":\"gmail\"},{\"id\":\"email_30\",\"subject\":\"Job 30\",\"date\":\"2026-02-01\",\"from\":\"hr@co.com\",\"title\":\"Job 30\",\"tags\":[\"job\"],\"provider\":\"gmail\"}]","tool_calls":null},"finish_reason":"stop"}],"usage":{"prompt_tokens":100,"completion_tokens":50,"total_tokens":150}}'
+    recorded_at: "Mon, 10 Mar 2026 10:00:04 GMT"
+  - request:
+      method: post
+      uri: https://api.mistral.ai/v1/chat/completions
+      body:
+        encoding: UTF-8
+        string: ""
+      headers:
+        Content-Type:
+          - application/json
+        Accept:
+          - "*/*"
+    response:
+      status:
+        code: 200
+        message: OK
+      headers:
+        Content-Type:
+          - application/json; charset=UTF-8
+      body:
+        encoding: UTF-8
+        string: '{"id":"chat-lb-5","object":"chat.completion","model":"mistral-large-latest","choices":[{"index":0,"message":{"role":"assistant","content":"[{\"date\":\"2026-02-01\",\"provider\":\"gmail\",\"email_id\":\"email_1\",\"company\":\"Company 1\",\"job_title\":\"Engineer\",\"action\":\"Applied\"},{\"date\":\"2026-02-01\",\"provider\":\"gmail\",\"email_id\":\"email_2\",\"company\":\"Company 2\",\"job_title\":\"Engineer\",\"action\":\"Applied\"},{\"date\":\"2026-02-01\",\"provider\":\"gmail\",\"email_id\":\"email_3\",\"company\":\"Company 3\",\"job_title\":\"Engineer\",\"action\":\"Applied\"},{\"date\":\"2026-02-01\",\"provider\":\"gmail\",\"email_id\":\"email_4\",\"company\":\"Company 4\",\"job_title\":\"Engineer\",\"action\":\"Applied\"},{\"date\":\"2026-02-01\",\"provider\":\"gmail\",\"email_id\":\"email_5\",\"company\":\"Company 5\",\"job_title\":\"Engineer\",\"action\":\"Applied\"},{\"date\":\"2026-02-01\",\"provider\":\"gmail\",\"email_id\":\"email_6\",\"company\":\"Company 6\",\"job_title\":\"Engineer\",\"action\":\"Applied\"},{\"date\":\"2026-02-01\",\"provider\":\"gmail\",\"email_id\":\"email_7\",\"company\":\"Company 7\",\"job_title\":\"Engineer\",\"action\":\"Applied\"},{\"date\":\"2026-02-01\",\"provider\":\"gmail\",\"email_id\":\"email_8\",\"company\":\"Company 8\",\"job_title\":\"Engineer\",\"action\":\"Applied\"},{\"date\":\"2026-02-01\",\"provider\":\"gmail\",\"email_id\":\"email_9\",\"company\":\"Company 9\",\"job_title\":\"Engineer\",\"action\":\"Applied\"},{\"date\":\"2026-02-01\",\"provider\":\"gmail\",\"email_id\":\"email_10\",\"company\":\"Company 10\",\"job_title\":\"Engineer\",\"action\":\"Applied\"},{\"date\":\"2026-02-01\",\"provider\":\"gmail\",\"email_id\":\"email_11\",\"company\":\"Company 11\",\"job_title\":\"Engineer\",\"action\":\"Applied\"},{\"date\":\"2026-02-01\",\"provider\":\"gmail\",\"email_id\":\"email_12\",\"company\":\"Company 12\",\"job_title\":\"Engineer\",\"action\":\"Applied\"},{\"date\":\"2026-02-01\",\"provider\":\"gmail\",\"email_id\":\"email_13\",\"company\":\"Company 13\",\"job_title\":\"Engineer\",\"action\":\"Applied\"},{\"date\":\"2026-02-01\",\"provider\":\"gmail\",\"email_id\":\"email_14\",\"company\":\"Company 14\",\"job_title\":\"Engineer\",\"action\":\"Applied\"},{\"date\":\"2026-02-01\",\"provider\":\"gmail\",\"email_id\":\"email_15\",\"company\":\"Company 15\",\"job_title\":\"Engineer\",\"action\":\"Applied\"}]","tool_calls":null},"finish_reason":"stop"}],"usage":{"prompt_tokens":100,"completion_tokens":50,"total_tokens":150}}'
+    recorded_at: "Mon, 10 Mar 2026 10:00:05 GMT"
+  - request:
+      method: post
+      uri: https://api.mistral.ai/v1/chat/completions
+      body:
+        encoding: UTF-8
+        string: ""
+      headers:
+        Content-Type:
+          - application/json
+        Accept:
+          - "*/*"
+    response:
+      status:
+        code: 200
+        message: OK
+      headers:
+        Content-Type:
+          - application/json; charset=UTF-8
+      body:
+        encoding: UTF-8
+        string: '{"id":"chat-lb-6","object":"chat.completion","model":"mistral-large-latest","choices":[{"index":0,"message":{"role":"assistant","content":"[{\"date\":\"2026-02-01\",\"provider\":\"gmail\",\"email_id\":\"email_16\",\"company\":\"Company 16\",\"job_title\":\"Engineer\",\"action\":\"Applied\"},{\"date\":\"2026-02-01\",\"provider\":\"gmail\",\"email_id\":\"email_17\",\"company\":\"Company 17\",\"job_title\":\"Engineer\",\"action\":\"Applied\"},{\"date\":\"2026-02-01\",\"provider\":\"gmail\",\"email_id\":\"email_18\",\"company\":\"Company 18\",\"job_title\":\"Engineer\",\"action\":\"Applied\"},{\"date\":\"2026-02-01\",\"provider\":\"gmail\",\"email_id\":\"email_19\",\"company\":\"Company 19\",\"job_title\":\"Engineer\",\"action\":\"Applied\"},{\"date\":\"2026-02-01\",\"provider\":\"gmail\",\"email_id\":\"email_20\",\"company\":\"Company 20\",\"job_title\":\"Engineer\",\"action\":\"Applied\"},{\"date\":\"2026-02-01\",\"provider\":\"gmail\",\"email_id\":\"email_21\",\"company\":\"Company 21\",\"job_title\":\"Engineer\",\"action\":\"Applied\"},{\"date\":\"2026-02-01\",\"provider\":\"gmail\",\"email_id\":\"email_22\",\"company\":\"Company 22\",\"job_title\":\"Engineer\",\"action\":\"Applied\"},{\"date\":\"2026-02-01\",\"provider\":\"gmail\",\"email_id\":\"email_23\",\"company\":\"Company 23\",\"job_title\":\"Engineer\",\"action\":\"Applied\"},{\"date\":\"2026-02-01\",\"provider\":\"gmail\",\"email_id\":\"email_24\",\"company\":\"Company 24\",\"job_title\":\"Engineer\",\"action\":\"Applied\"},{\"date\":\"2026-02-01\",\"provider\":\"gmail\",\"email_id\":\"email_25\",\"company\":\"Company 25\",\"job_title\":\"Engineer\",\"action\":\"Applied\"},{\"date\":\"2026-02-01\",\"provider\":\"gmail\",\"email_id\":\"email_26\",\"company\":\"Company 26\",\"job_title\":\"Engineer\",\"action\":\"Applied\"},{\"date\":\"2026-02-01\",\"provider\":\"gmail\",\"email_id\":\"email_27\",\"company\":\"Company 27\",\"job_title\":\"Engineer\",\"action\":\"Applied\"},{\"date\":\"2026-02-01\",\"provider\":\"gmail\",\"email_id\":\"email_28\",\"company\":\"Company 28\",\"job_title\":\"Engineer\",\"action\":\"Applied\"},{\"date\":\"2026-02-01\",\"provider\":\"gmail\",\"email_id\":\"email_29\",\"company\":\"Company 29\",\"job_title\":\"Engineer\",\"action\":\"Applied\"},{\"date\":\"2026-02-01\",\"provider\":\"gmail\",\"email_id\":\"email_30\",\"company\":\"Company 30\",\"job_title\":\"Engineer\",\"action\":\"Applied\"}]","tool_calls":null},"finish_reason":"stop"}],"usage":{"prompt_tokens":100,"completion_tokens":50,"total_tokens":150}}'
+    recorded_at: "Mon, 10 Mar 2026 10:00:06 GMT"
+  - request:
+      method: post
+      uri: https://api.mistral.ai/v1/chat/completions
+      body:
+        encoding: UTF-8
+        string: ""
+      headers:
+        Content-Type:
+          - application/json
+        Accept:
+          - "*/*"
+    response:
+      status:
+        code: 200
+        message: OK
+      headers:
+        Content-Type:
+          - application/json; charset=UTF-8
+      body:
+        encoding: UTF-8
+        string: '{"id":"chat-lb-7","object":"chat.completion","model":"mistral-large-latest","choices":[{"index":0,"message":{"role":"assistant","content":"Added 30 new entries.","tool_calls":null},"finish_reason":"stop"}],"usage":{"prompt_tokens":100,"completion_tokens":50,"total_tokens":150}}'
+    recorded_at: "Mon, 10 Mar 2026 10:00:07 GMT"
+recorded_with: VCR 6.3.1

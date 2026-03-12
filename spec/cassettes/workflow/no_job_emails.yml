@@ -1,0 +1,93 @@
+---
+# Fetched emails exist but none are job-related — workflow exits after Step 3.
+# 4 POST interactions: Init, FetchGmail, FetchYahoo, Classify (returns []).
+http_interactions:
+  - request:
+      method: post
+      uri: https://api.mistral.ai/v1/chat/completions
+      body:
+        encoding: UTF-8
+        string: ""
+      headers:
+        Content-Type:
+          - application/json
+        Accept:
+          - "*/*"
+    response:
+      status:
+        code: 200
+        message: OK
+      headers:
+        Content-Type:
+          - application/json; charset=UTF-8
+      body:
+        encoding: UTF-8
+        string: '{"id":"chat-nje-1","object":"chat.completion","model":"mistral-large-latest","choices":[{"index":0,"message":{"role":"assistant","content":"{\"latest_date\":\"2026-03-10\",\"existing_ids\":[\"existing_id\"]}","tool_calls":null},"finish_reason":"stop"}],"usage":{"prompt_tokens":100,"completion_tokens":50,"total_tokens":150}}'
+    recorded_at: "Mon, 10 Mar 2026 10:00:01 GMT"
+  - request:
+      method: post
+      uri: https://api.mistral.ai/v1/chat/completions
+      body:
+        encoding: UTF-8
+        string: ""
+      headers:
+        Content-Type:
+          - application/json
+        Accept:
+          - "*/*"
+    response:
+      status:
+        code: 200
+        message: OK
+      headers:
+        Content-Type:
+          - application/json; charset=UTF-8
+      body:
+        encoding: UTF-8
+        string: '{"id":"chat-nje-2","object":"chat.completion","model":"mistral-large-latest","choices":[{"index":0,"message":{"role":"assistant","content":"[{\"id\":\"gmail_001\",\"subject\":\"Order confirmation\",\"date\":\"2026-02-01\",\"from\":\"store@shop.com\"}]","tool_calls":null},"finish_reason":"stop"}],"usage":{"prompt_tokens":100,"completion_tokens":40,"total_tokens":140}}'
+    recorded_at: "Mon, 10 Mar 2026 10:00:02 GMT"
+  - request:
+      method: post
+      uri: https://api.mistral.ai/v1/chat/completions
+      body:
+        encoding: UTF-8
+        string: ""
+      headers:
+        Content-Type:
+          - application/json
+        Accept:
+          - "*/*"
+    response:
+      status:
+        code: 200
+        message: OK
+      headers:
+        Content-Type:
+          - application/json; charset=UTF-8
+      body:
+        encoding: UTF-8
+        string: '{"id":"chat-nje-3","object":"chat.completion","model":"mistral-large-latest","choices":[{"index":0,"message":{"role":"assistant","content":"[{\"id\":\"yahoo_001\",\"subject\":\"Newsletter update\",\"date\":\"2026-02-03\",\"from\":\"news@newsletter.com\"}]","tool_calls":null},"finish_reason":"stop"}],"usage":{"prompt_tokens":100,"completion_tokens":40,"total_tokens":140}}'
+    recorded_at: "Mon, 10 Mar 2026 10:00:03 GMT"
+  - request:
+      method: post
+      uri: https://api.mistral.ai/v1/chat/completions
+      body:
+        encoding: UTF-8
+        string: ""
+      headers:
+        Content-Type:
+          - application/json
+        Accept:
+          - "*/*"
+    response:
+      status:
+        code: 200
+        message: OK
+      headers:
+        Content-Type:
+          - application/json; charset=UTF-8
+      body:
+        encoding: UTF-8
+        string: '{"id":"chat-nje-4","object":"chat.completion","model":"mistral-large-latest","choices":[{"index":0,"message":{"role":"assistant","content":"[]","tool_calls":null},"finish_reason":"stop"}],"usage":{"prompt_tokens":120,"completion_tokens":5,"total_tokens":125}}'
+    recorded_at: "Mon, 10 Mar 2026 10:00:04 GMT"
+recorded_with: VCR 6.3.1

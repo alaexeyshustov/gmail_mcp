@@ -1,6 +1,3 @@
-require_relative './base_adapter'
-require_relative '../services/yahoo_mail_service'
-
 module Adapters
   # Adapts YahooMailService to the unified BaseAdapter interface.
   # Yahoo-specific arguments (mailbox:, flagged:) are accepted as optional kwargs

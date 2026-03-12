@@ -1,5 +1,4 @@
 require_relative '../spec_helper'
-require_relative '../../lib/email_classifier'
 
 RSpec.describe EmailClassifier do
   let(:api_key) { 'test-api-key' }

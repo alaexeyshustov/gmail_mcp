@@ -1,5 +1,4 @@
 require 'fast_mcp'
-require_relative '../email_classifier'
 
 module Tools
   class ClassifyEmails < FastMcp::Tool

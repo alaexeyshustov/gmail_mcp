@@ -14,7 +14,7 @@ class ClassificationSchema < RubyLLM::Schema
 end
 
 class EmailClassifier
-  DEFAULT_MODEL = 'mistral-medium-2508'.freeze
+  DEFAULT_MODEL = 'mistral-medium-latest'.freeze
 
   PROMPT = <<~PROMPT
     You are an email classifier. You will receive a JSON array of objects,

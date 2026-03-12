@@ -1,6 +1,4 @@
 require_relative '../../spec_helper'
-require_relative '../../../lib/provider_registry'
-require_relative '../../../lib/tools/get_email'
 
 RSpec.describe Tools::GetEmail do
   let(:gmail_adapter) { double('GmailAdapter') }

@@ -1,5 +1,4 @@
 require 'fast_mcp'
-require_relative '../provider_registry'
 
 module Tools
   class AddLabels < FastMcp::Tool

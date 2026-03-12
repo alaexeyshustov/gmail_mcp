@@ -23,5 +23,8 @@ coverage/
 spec/reports/
 tmp/
 
-interviews.md
-interviews.csv
+db/*.csv
+db/*.json
+db/*.md
+
+log/*.log

@@ -1,5 +1,4 @@
 require_relative '../spec_helper'
-require_relative '../../lib/provider_registry'
 
 RSpec.describe ProviderRegistry do
   subject(:registry) { described_class.new }

@@ -3,7 +3,8 @@
 require 'dry/cli'
 require 'fileutils'
 require 'dotenv/load'
-require_relative '../lib/services/gmail_auth'
+require 'ruby_llm'
+require_relative '../lib/loader'
 
 module CLI
   module Commands
@@ -225,11 +226,103 @@ module CLI
       end
     end
 
-    register 'setup',  Setup
-    register 'test',   Test
-    register 'reset',  Reset
-    register 'status', Status
-    register 'server', Server
+    class JobsPipeline < Dry::CLI::Command
+      WATCH_INTERVAL = 6 * 60 * 60 # 6 hours in seconds
+
+      desc 'Run the job application tracking pipeline (multi-agent: classify emails, label, update CSVs)'
+
+      option :model, default: 'mistral-large-latest',
+                     desc: 'LLM model for all agents (e.g. mistral-large-latest, 5.1, claude-sonnet-4-5)'
+      option :watch, type: :boolean, default: false,
+                     desc: 'Run in a loop, repeating every 6 hours'
+      option :log_level, default: 'info',
+                         desc: 'Logging verbosity: debug, info, warn, error'
+      option :log_file, desc: 'Path to log file; all output is duplicated here (default: log/pipeline.log)'
+
+      def call(model:, watch:, log_level: 'info', log_file: nil, **)
+        log_file_path = log_file || File.expand_path('../../log/pipeline.log', __FILE__)
+        FileUtils.mkdir_p(File.dirname(log_file_path))
+        logger = Pipeline::Logger.new(level: log_level.to_sym, log_file: log_file_path)
+
+        RubyLLM.configure do |config|
+          config.openai_api_key    = ENV.fetch('OPENAI_API_KEY', '')
+          config.gemini_api_key = ENV.fetch('GEMINI_API_KEY', '')
+          config.mistral_api_key   = ENV.fetch('MISTRAL_API_KEY', '')
+          config.log_level = log_level.to_sym
+          config.logger    = logger
+        end
+
+        loop do
+          logger.info "Starting job application tracking pipeline (model: #{model})..."
+          mcp = Pipeline::McpConnection.new
+          begin
+            result = Pipeline::JobsWorkflow.new(mcp_connection: mcp, model: model, logger: logger).run
+            logger.info 'Pipeline complete.'
+            logger.debug result.inspect
+            puts result.inspect
+          ensure
+            mcp.stop
+          end
+
+          break unless watch
+
+          next_run = Time.now + WATCH_INTERVAL
+          logger.info "Watch mode: next run at #{next_run.strftime('%Y-%m-%d %H:%M:%S')}. Press Ctrl+C to stop."
+          sleep WATCH_INTERVAL
+        end
+      end
+    end
+
+    class UploadGist < Dry::CLI::Command
+      DEFAULT_FILENAME = 'interviews.csv'
+
+      desc 'Upload a CSV file to a GitHub Gist'
+
+      argument :path, desc: "Path to the file to upload (default: db/#{DEFAULT_FILENAME})"
+
+      option :token,    desc: 'GitHub personal access token (default: $GITHUB_TOKEN)'
+      option :gist_id,  desc: 'Existing Gist ID to update (default: $GIST_ID)'
+      option :filename, default: DEFAULT_FILENAME,
+                        desc: "Filename used inside the Gist (default: #{DEFAULT_FILENAME})"
+
+      def call(path: nil, token: nil, gist_id: nil, filename: DEFAULT_FILENAME, **)
+        resolved_path = path || File.expand_path("../../db/#{DEFAULT_FILENAME}", __FILE__)
+
+        unless File.exist?(resolved_path)
+          puts "✗ File not found: #{resolved_path}"
+          exit 1
+        end
+
+        resolved_token = token || ENV['GITHUB_TOKEN']
+        unless resolved_token
+          puts '✗ GitHub token is required. Pass --token or set $GITHUB_TOKEN.'
+          exit 1
+        end
+
+        resolved_gist_id = gist_id || ENV['GIST_ID']
+
+        uploader = GistUploader.new(
+          token:    resolved_token,
+          gist_id:  resolved_gist_id,
+          filename: filename
+        )
+
+        puts "Uploading #{resolved_path} to GitHub Gist..."
+        url = uploader.upload(resolved_path)
+        puts "✓ Uploaded: #{url}"
+      rescue GistUploader::ApiError => e
+        puts "✗ Upload failed: #{e.message}"
+        exit 1
+      end
+    end
+
+    register 'setup',          Setup
+    register 'test',           Test
+    register 'reset',          Reset
+    register 'status',         Status
+    register 'server',         Server
+    register 'jobs_pipeline',  JobsPipeline
+    register 'upload_gist',    UploadGist
   end
 end
 

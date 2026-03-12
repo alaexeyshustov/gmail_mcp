@@ -1,6 +1,8 @@
 require 'rspec'
 require 'webmock/rspec'
 require 'vcr'
+require 'ruby_llm'
+require_relative '../lib/loader'
 
 # Load support files
 Dir[File.join(__dir__, 'support', '**', '*.rb')].each { |f| require f }
