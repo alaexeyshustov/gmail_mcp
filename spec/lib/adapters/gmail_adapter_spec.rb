@@ -1,6 +1,4 @@
 require_relative '../../spec_helper'
-require_relative '../../../lib/services/gmail_service'
-require_relative '../../../lib/adapters/gmail_adapter'
 
 RSpec.describe Adapters::GmailAdapter do
   let(:gmail_service) { instance_double(GmailService) }

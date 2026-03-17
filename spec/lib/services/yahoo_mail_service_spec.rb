@@ -1,5 +1,4 @@
 require_relative '../../spec_helper'
-require_relative '../../../lib/services/yahoo_mail_service'
 
 RSpec.describe YahooMailService do
   let(:imap) { instance_double(Net::IMAP) }

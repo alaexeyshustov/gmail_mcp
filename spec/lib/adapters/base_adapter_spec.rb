@@ -1,5 +1,4 @@
 require_relative '../../spec_helper'
-require_relative '../../../lib/adapters/base_adapter'
 
 RSpec.describe Adapters::BaseAdapter do
   subject(:adapter) { described_class.new }

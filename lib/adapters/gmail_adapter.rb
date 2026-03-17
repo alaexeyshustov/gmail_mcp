@@ -1,6 +1,3 @@
-require_relative './base_adapter'
-require_relative '../services/gmail_service'
-
 module Adapters
   # Adapts GmailService to the unified BaseAdapter interface.
   class GmailAdapter < BaseAdapter

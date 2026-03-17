@@ -3,7 +3,8 @@
 require 'dry/cli'
 require 'fileutils'
 require 'dotenv/load'
-require_relative '../lib/services/gmail_auth'
+require 'ruby_llm'
+require_relative '../lib/loader'
 
 module CLI
   module Commands
@@ -225,11 +226,11 @@ module CLI
       end
     end
 
-    register 'setup',  Setup
-    register 'test',   Test
-    register 'reset',  Reset
-    register 'status', Status
-    register 'server', Server
+    register 'setup',          Setup
+    register 'test',           Test
+    register 'reset',          Reset
+    register 'status',         Status
+    register 'server',         Server
   end
 end
 

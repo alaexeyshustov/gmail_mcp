@@ -1,6 +1,4 @@
 require_relative '../../spec_helper'
-require_relative '../../../lib/provider_registry'
-require_relative '../../../lib/tools/get_unread_count'
 
 RSpec.describe Tools::GetUnreadCount do
   let(:gmail_adapter) { double('GmailAdapter') }

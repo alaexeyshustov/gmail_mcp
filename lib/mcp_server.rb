@@ -2,22 +2,7 @@
 
 require 'dotenv/load'
 require 'fast_mcp'
-
-require_relative 'services/gmail_service'
-require_relative 'services/yahoo_mail_service'
-require_relative 'adapters/gmail_adapter'
-require_relative 'adapters/yahoo_adapter'
-require_relative 'provider_registry'
-require_relative 'email_classifier'
-
-require_relative 'tools/list_emails'
-require_relative 'tools/get_email'
-require_relative 'tools/search_emails'
-require_relative 'tools/get_labels'
-require_relative 'tools/get_unread_count'
-require_relative 'tools/add_labels'
-require_relative 'tools/classify_emails'
-require_relative 'tools/manage_csv'
+require_relative 'loader'
 
 # ---------------------------------------------------------------------------
 # Build the provider registry — register only configured providers

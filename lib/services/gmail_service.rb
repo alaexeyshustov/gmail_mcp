@@ -1,7 +1,6 @@
 require 'google/apis/gmail_v1'
 require 'googleauth'
 require 'googleauth/stores/file_token_store'
-require_relative './gmail_auth'
 
 class GmailService
   attr_reader :service
